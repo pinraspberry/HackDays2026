@@ -56,7 +56,7 @@ interface MedicationContextType {
 const MedicationContext = createContext<MedicationContextType | undefined>(undefined);
 
 // Initial mock data to look stunning at first load for judges!
-const INITIAL_MEDICATIONS: Medication[] = [
+/*const INITIAL_MEDICATIONS: Medication[] = [
   {
     id: 'med-1',
     name: 'Aspirin (150mg)',
@@ -84,7 +84,7 @@ const INITIAL_MEDICATIONS: Medication[] = [
     startDate: new Date().toISOString().split('T')[0],
     instructions: 'After lunch'
   }
-];
+];*/
 
 /*const INITIAL_DOCUMENTS: MedDocument[] = [
   {
@@ -121,12 +121,7 @@ export const MedicationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         
         // If Firestore is empty, initialize with beautiful defaults
         if (meds.length === 0) {
-          INITIAL_MEDICATIONS.forEach(async (m) => {
-            const { id, ...medWithoutId } = m;
-            await addDoc(collection(db, `users/${user.uid}/medications`), medWithoutId);
-          });
-        } else {
-          setMedications(meds);
+          setMedications([]);
         }
       });
 
@@ -160,8 +155,8 @@ export const MedicationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (localMeds) {
         setMedications(JSON.parse(localMeds));
       } else {
-        setMedications(INITIAL_MEDICATIONS);
-        localStorage.setItem('pulse_medications', JSON.stringify(INITIAL_MEDICATIONS));
+        setMedications([]);
+        localStorage.setItem('pulse_medications', JSON.stringify([]));
       }
 
       /*const localDocs = localStorage.getItem('pulse_documents');
@@ -176,21 +171,7 @@ export const MedicationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (localLogs) {
         setLogs(JSON.parse(localLogs));
       } else {
-        // Pre-fill some taken logs for the past 3 days so charts are visually stunning!
-        const initialLogs: Record<string, Record<string, DoseLog>> = {};
-        const today = new Date();
-        for (let i = 0; i < 4; i++) {
-          const date = new Date(today);
-          date.setDate(today.getDate() - i);
-          const dateStr = date.toISOString().split('T')[0];
-          initialLogs[dateStr] = {
-            'med-1_morning': { medId: 'med-1', medName: 'Aspirin', dosage: '1 Tablet', timeSlot: 'morning', taken: i !== 2, takenAt: '08:30' },
-            'med-2_morning': { medId: 'med-2', medName: 'Metformin', dosage: '1 Tablet', timeSlot: 'morning', taken: true, takenAt: '09:00' },
-            'med-2_night': { medId: 'med-2', medName: 'Metformin', dosage: '1 Tablet', timeSlot: 'night', taken: i !== 1, takenAt: '21:00' }
-          };
-        }
-        setLogs(initialLogs);
-        localStorage.setItem('pulse_logs', JSON.stringify(initialLogs));
+        setLogs({})
       }
     }
   }, [isFirebaseActive, db, user]);

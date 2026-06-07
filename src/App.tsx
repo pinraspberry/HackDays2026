@@ -1,17 +1,25 @@
 import React, { useState } from 'react';
 import { SettingsProvider } from './context/SettingsContext';
-import { FirebaseProvider } from './context/FirebaseContext';
+import { FirebaseProvider, useFirebase } from './context/FirebaseContext';
 import { MedicationProvider } from './context/MedicationContext';
+
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Medicines } from './pages/Medicines';
 import { Documents } from './pages/Documents';
 import { AdherenceReport } from './pages/AdherenceReport';
 import { Caregiver } from './pages/Caregiver';
+import Login from './pages/Login';
+
 import './App.css';
 
 const AppContent: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>('home');
+  const [activeTab, setActiveTab] = useState('home');
+
+  const { user, loading } = useFirebase();
+
+  console.log("USER =", user);
+  console.log("LOADING =", loading);
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -30,12 +38,19 @@ const AppContent: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {/* Dynamic Tab Switch Header for pages that require direct routing e.g. Reports */}
       {activeTab === 'home' && (
         <div className="flex justify-end mb-4">
-          <button 
+          <button
             onClick={() => setActiveTab('reports')}
             className="flex items-center space-x-1 text-xs font-bold text-accent bg-accent/10 border border-accent/15 py-1.5 px-3 rounded-xl hover:bg-accent/15 tactile-btn"
           >
