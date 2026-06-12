@@ -8,7 +8,6 @@ import {
   Settings,
   X,
   Volume2,
-  ShieldAlert,
   Menu,
   LogOut,
   User as UserIcon,
@@ -27,6 +26,7 @@ import { SarvamService } from '../services/sarvamService';
 import { auth } from '../firebase';
 import { PatientSwitcher } from './PatientSwitcher';
 import { CaregiverSOSBanner } from './CaregiverSOSBanner';
+import { AccessibilitySettings } from './AccessibilitySettings';
 
 interface LayoutProps {
   activeTab: string;
@@ -45,13 +45,7 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
   const {
     language,
     setLanguage,
-    sarvamKey,
-    setSarvamKey,
-    firebaseConfig,
-    setFirebaseConfig,
     t,
-    isDemo,
-    setIsDemo,
   } = useSettings();
   const { addMedication } = useMedication();
   const { user } = useFirebase();
@@ -62,8 +56,6 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
   const [isMicOpen, setIsMicOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [speechText, setSpeechText] = useState('');
-  const [tempSarvam, setTempSarvam] = useState(sarvamKey);
-  const [tempFirebase, setTempFirebase] = useState(firebaseConfig);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // mobile only
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [isPatientSwitcherOpen, setIsPatientSwitcherOpen] = useState(false);
@@ -185,16 +177,6 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
     setIsMicOpen(false);
   };
 
-  const handleSaveSettings = () => {
-    setSarvamKey(tempSarvam);
-    setFirebaseConfig(tempFirebase);
-    setIsSettingsOpen(false);
-
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
-  };
-
   const handleLogout = async () => {
     try {
       await auth.signOut();
@@ -204,6 +186,18 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
       setProfileMenuOpen(false);
     }
   };
+
+  // Alt+A opens accessibility settings (keyboard-only users)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        setIsSettingsOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   // Localised sidebar labels (kept short for the 240px column)
   const navLabels: Record<string, { en: string; native?: string }> = {
@@ -245,19 +239,18 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
   return (
     <div className="min-h-screen w-full bg-navy-950 text-navy-50 flex flex-col">
       {/* ===== TOP NAVBAR ===== */}
-      <header className="sticky top-0 z-40 h-16 bg-navy-900/95 backdrop-blur border-b border-navy-800 flex items-center px-4 lg:px-6">
+      <header className="sticky top-0 z-40 h-[72px] bg-navy-900/95 backdrop-blur border-b border-navy-800 flex items-center px-4 lg:px-8">
         {/* Caregiver hamburger — opens linked patients drawer */}
         {role === 'caregiver' && (
           <button
             onClick={() => setIsPatientSwitcherOpen(true)}
-            className="mr-3 p-2 text-navy-100 hover:text-white bg-navy-850 rounded-card border border-navy-800 tactile-btn relative"
+            className="mr-3 text-navy-50 hover:text-accent bg-navy-850 hover:bg-accent/10 rounded-card border border-navy-800 hover:border-accent tactile-btn relative flex items-center justify-center min-tap"
             aria-label="Open linked patients"
-            style={{ minHeight: 40, minWidth: 40 }}
           >
-            <Users size={18} />
+            <Users size={20} />
             {activePatientId && (
               <span
-                className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-success border-2 border-navy-900"
+                className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-success border-2 border-navy-900"
                 aria-hidden="true"
               />
             )}
@@ -267,21 +260,20 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
         {/* Mobile sidebar toggle */}
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="lg:hidden mr-3 p-2 text-navy-100 hover:text-white bg-navy-850 rounded-card border border-navy-800 tactile-btn"
+          className="lg:hidden mr-3 text-navy-50 hover:text-accent bg-navy-850 hover:bg-accent/10 rounded-card border border-navy-800 hover:border-accent tactile-btn flex items-center justify-center min-tap"
           aria-label="Open menu"
-          style={{ minHeight: 40, minWidth: 40 }}
         >
-          <Menu size={18} />
+          <Menu size={20} />
         </button>
 
         {/* Brand */}
         <div className="flex items-center space-x-2.5">
-          <div className="w-9 h-9 rounded-card bg-accent flex items-center justify-center font-bold text-white text-lg shadow-lg shadow-accent/20">
+          <div className="w-11 h-11 rounded-card bg-accent flex items-center justify-center font-medium text-white text-lg shadow-soft">
             ⚡
           </div>
           <div className="leading-tight">
-            <h1 className="text-base font-bold text-white tracking-wide">{t.appName}</h1>
-            <span className="hidden sm:block text-[10px] font-semibold text-navy-700 uppercase tracking-widest">
+            <h1 className="text-base font-medium text-navy-50 tracking-tight">{t.appName}</h1>
+            <span className="hidden sm:block text-xs font-medium text-navy-700 uppercase tracking-wider">
               Medication Tracker
             </span>
           </div>
@@ -294,7 +286,9 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value as LanguageCode)}
-            className="bg-navy-850 text-navy-50 font-medium text-sm px-2.5 py-1.5 rounded-card border border-navy-800 outline-none cursor-pointer hover:border-navy-750 focus:border-accent transition-colors"
+            aria-label="Select language"
+            className="bg-navy-850 text-navy-50 font-medium text-sm px-3 rounded-card border border-navy-800 outline-none cursor-pointer hover:border-accent focus:border-accent focus:ring-2 focus:ring-accent/30 transition-all"
+            style={{ minHeight: 48 }}
           >
             <option value="hi">हिंदी</option>
             <option value="ta">தமிழ்</option>
@@ -309,17 +303,19 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
 
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="p-2 text-navy-100 hover:text-white bg-navy-850 rounded-card border border-navy-800 hover:border-navy-750 tactile-btn"
-            aria-label="Settings"
+            className="text-navy-50 hover:text-accent bg-navy-850 hover:bg-accent/10 rounded-card border border-navy-800 hover:border-accent tactile-btn flex items-center gap-2 px-3 min-tap"
+            aria-label="Open accessibility and theme settings"
+            title="Accessibility & Theme settings (Alt+A)"
           >
-            <Settings size={18} />
+            <Settings size={22} />
+            <span className="hidden md:inline text-sm font-medium">Settings</span>
           </button>
 
           {/* Profile avatar */}
           <div className="relative">
             <button
               onClick={() => setProfileMenuOpen(p => !p)}
-              className="w-9 h-9 rounded-full bg-gradient-to-br from-accent to-accent-dark text-white font-bold text-sm flex items-center justify-center shadow-md hover:scale-105 transition-transform tactile-btn"
+              className="w-11 h-11 rounded-full bg-accent text-white font-medium text-sm flex items-center justify-center shadow-soft hover:bg-accent-dark transition-colors tactile-btn"
               aria-label="Profile"
             >
               {userInitial}
@@ -331,21 +327,22 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
                   className="fixed inset-0 z-30"
                   onClick={() => setProfileMenuOpen(false)}
                 />
-                <div className="absolute right-0 top-12 w-60 bg-navy-900 border border-navy-800 rounded-card shadow-2xl z-40 p-2 animate-slide-up">
-                  <div className="px-3 py-2 border-b border-navy-800 mb-1.5">
-                    <div className="text-[10px] font-bold text-navy-700 uppercase tracking-widest">
+                <div className="absolute right-0 top-14 w-72 bg-navy-900 border border-navy-800 rounded-card shadow-lifted z-40 p-3 animate-slide-up">
+                  <div className="px-3 py-3 border-b border-navy-800 mb-2">
+                    <div className="text-xs font-medium text-navy-700 uppercase tracking-wider">
                       Signed in as
                     </div>
-                    <div className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
-                      <UserIcon size={13} />
+                    <div className="text-sm font-medium text-navy-50 truncate flex items-center gap-2 mt-1">
+                      <UserIcon size={16} className="text-navy-700" />
                       {user?.email || 'Guest'}
                     </div>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-400 hover:bg-rose-500/10 rounded-card text-left tactile-btn"
+                    className="w-full flex items-center gap-3 px-3 text-sm font-medium text-danger hover:bg-danger-light rounded-card text-left tactile-btn"
+                    style={{ minHeight: 48 }}
                   >
-                    <LogOut size={14} />
+                    <LogOut size={18} />
                     <span>Sign out</span>
                   </button>
                 </div>
@@ -357,30 +354,31 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
 
       {/* ===== Caregiver "Viewing patient X" banner ===== */}
       {role === 'caregiver' && activePatientId && (
-        <div className="sticky top-16 z-30 bg-success/10 border-b border-success/30 px-4 lg:px-6 py-2.5 flex items-center gap-3 backdrop-blur">
+        <div className="sticky top-[72px] z-30 bg-success-light border-b border-success/30 px-4 lg:px-8 py-3 flex items-center gap-3">
           <button
             onClick={() => setIsPatientSwitcherOpen(true)}
-            className="inline-flex items-center gap-2 text-success hover:text-white tactile-btn"
-            style={{ minHeight: 36 }}
+            className="inline-flex items-center gap-2 text-success-dark hover:text-success tactile-btn"
+            style={{ minHeight: 48, paddingInline: 8 }}
+            aria-label="Switch patient"
           >
-            <ChevronLeft size={14} />
-            <Users size={14} />
+            <ChevronLeft size={18} />
+            <Users size={18} />
           </button>
           <div className="flex-1 min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-success">
+            <span className="text-xs font-medium uppercase tracking-wider text-success-dark">
               {language === 'hi' ? 'देख रहे हैं' : 'Viewing'}
             </span>
-            <span className="ml-2 text-sm font-bold text-white truncate">
+            <span className="ml-2 text-sm font-medium text-navy-50 truncate">
               {activePatientName || 'Linked patient'}
             </span>
           </div>
           <button
             onClick={() => setActivePatientId(null)}
-            className="inline-flex items-center gap-1 text-xs font-bold text-success hover:text-white bg-success/10 hover:bg-success/20 border border-success/30 rounded-card px-3 tactile-btn"
-            style={{ minHeight: 36 }}
+            className="inline-flex items-center gap-2 text-sm font-medium text-success-dark bg-success-light hover:bg-success/15 border border-success/40 rounded-card px-4 tactile-btn"
+            style={{ minHeight: 48 }}
             aria-label="Exit patient view"
           >
-            <X size={12} />
+            <X size={16} />
             <span className="hidden sm:inline">{language === 'hi' ? 'बाहर निकलें' : 'Exit'}</span>
           </button>
         </div>
@@ -398,8 +396,8 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
       {/* ===== BODY: SIDEBAR + MAIN ===== */}
       <div className="flex-1 flex">
         {/* Sidebar — desktop */}
-        <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-navy-800 bg-navy-900/40 sticky top-16 h-[calc(100vh-4rem)]">
-          <nav className="flex-1 p-3 space-y-1 overflow-y-auto thin-scroll">
+        <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-navy-800 bg-navy-900 sticky top-[72px] h-[calc(100vh-72px)]">
+          <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto thin-scroll">
             {navItems.map(item => {
               const Icon = item.icon;
               const active = activeTab === item.id;
@@ -407,17 +405,19 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-card text-left transition-all border ${
+                  aria-current={active ? 'page' : undefined}
+                  className={`w-full flex items-center gap-3 pl-4 pr-3 py-3 rounded-card text-left transition-colors border-l-[3px] ${
                     active
-                      ? 'bg-accent/10 border-accent/30 text-accent shadow-md'
-                      : 'border-transparent text-navy-100 hover:bg-navy-850 hover:text-white'
+                      ? 'bg-accent/8 border-l-accent text-accent-dark'
+                      : 'border-l-transparent text-navy-50 hover:bg-navy-850 hover:text-accent-dark'
                   }`}
+                  style={{ minHeight: 48 }}
                 >
-                  <Icon size={18} className={active ? 'text-accent' : 'text-navy-700'} />
+                  <Icon size={20} className={active ? 'text-accent' : 'text-navy-700'} />
                   <span className="flex flex-col leading-tight">
-                    <span className="text-sm font-semibold">{item.label}</span>
+                    <span className={`text-sm ${active ? 'font-medium' : 'font-medium'}`}>{item.label}</span>
                     {item.nativeLabel && item.nativeLabel !== item.label && (
-                      <span className="text-[10px] text-navy-700 font-medium">{item.nativeLabel}</span>
+                      <span className="text-xs text-navy-700 font-medium mt-0.5">{item.nativeLabel}</span>
                     )}
                   </span>
                 </button>
@@ -426,16 +426,22 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
           </nav>
 
           {/* Voice mic CTA in the sidebar footer */}
-          <div className="p-3 border-t border-navy-800">
+          <div className="p-4 border-t border-navy-800">
             <button
               onClick={toggleMic}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-white font-bold py-2.5 rounded-card border border-accent shadow-lg shadow-accent/20 tactile-btn mic-active-pulse"
+              className="w-full flex items-center justify-center gap-3 bg-accent hover:bg-accent-dark text-white font-medium rounded-card shadow-lifted tactile-btn voice-halo"
+              style={{ minHeight: 64 }}
+              aria-label={language === 'hi' ? 'आवाज से दवा जोड़ें' : 'Add medicine by voice'}
             >
-              <Mic size={16} />
-              <span className="text-sm">Voice Add</span>
+              <Mic size={26} />
+              <span className="text-base">
+                {language === 'hi' ? 'आवाज से जोड़ें' : 'Voice Add'}
+              </span>
             </button>
-            <p className="text-[10px] text-navy-700 text-center mt-2 leading-tight">
-              Speak in your language to log a medicine
+            <p className="text-sm text-navy-700 text-center mt-3 leading-relaxed">
+              {language === 'hi'
+                ? 'दवा का नाम बोलिए, हम जोड़ देंगे'
+                : 'Speak the medicine name and we will add it for you'}
             </p>
           </div>
         </aside>
@@ -444,23 +450,24 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
         {isSidebarOpen && (
           <>
             <div
-              className="lg:hidden fixed inset-0 bg-black/60 z-40 animate-fade-in"
+              className="lg:hidden fixed inset-0 bg-navy-50/40 backdrop-blur-sm z-40 animate-fade-in"
               onClick={() => setIsSidebarOpen(false)}
             />
-            <aside className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-navy-900 border-r border-navy-800 z-50 flex flex-col animate-slide-left">
+            <aside className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-navy-900 border-r border-navy-800 z-50 flex flex-col animate-slide-left shadow-lifted">
               <div className="h-16 px-4 flex items-center justify-between border-b border-navy-800">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-card bg-accent flex items-center justify-center font-bold text-white">⚡</div>
-                  <span className="font-bold text-white">{t.appName}</span>
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-10 h-10 rounded-card bg-accent flex items-center justify-center font-medium text-white">⚡</div>
+                  <span className="font-medium text-navy-50 text-base">{t.appName}</span>
                 </div>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
-                  className="p-2 text-navy-100 bg-navy-850 rounded-card border border-navy-800 tactile-btn"
+                  className="text-navy-50 hover:text-accent bg-navy-850 hover:bg-accent/10 rounded-card border border-navy-800 tactile-btn flex items-center justify-center min-tap"
+                  aria-label="Close menu"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
-              <nav className="flex-1 p-3 space-y-1 overflow-y-auto thin-scroll">
+              <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto thin-scroll">
                 {navItems.map(item => {
                   const Icon = item.icon;
                   const active = activeTab === item.id;
@@ -471,33 +478,39 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
                         setActiveTab(item.id);
                         setIsSidebarOpen(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-card text-left transition-all border ${
+                      aria-current={active ? 'page' : undefined}
+                      className={`w-full flex items-center gap-3 pl-4 pr-3 py-3 rounded-card text-left transition-colors border-l-[3px] ${
                         active
-                          ? 'bg-accent/10 border-accent/30 text-accent'
-                          : 'border-transparent text-navy-100 hover:bg-navy-850'
+                          ? 'bg-accent/8 border-l-accent text-accent-dark'
+                          : 'border-l-transparent text-navy-50 hover:bg-navy-850'
                       }`}
+                      style={{ minHeight: 48 }}
                     >
-                      <Icon size={18} className={active ? 'text-accent' : 'text-navy-700'} />
+                      <Icon size={20} className={active ? 'text-accent' : 'text-navy-700'} />
                       <span className="flex flex-col leading-tight">
-                        <span className="text-sm font-semibold">{item.label}</span>
+                        <span className="text-sm font-medium">{item.label}</span>
                         {item.nativeLabel && item.nativeLabel !== item.label && (
-                          <span className="text-[10px] text-navy-700 font-medium">{item.nativeLabel}</span>
+                          <span className="text-xs text-navy-700 font-medium mt-0.5">{item.nativeLabel}</span>
                         )}
                       </span>
                     </button>
                   );
                 })}
               </nav>
-              <div className="p-3 border-t border-navy-800">
+              <div className="p-4 border-t border-navy-800">
                 <button
                   onClick={() => {
                     setIsSidebarOpen(false);
                     toggleMic();
                   }}
-                  className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-white font-bold py-3 rounded-card border border-accent tactile-btn mic-active-pulse"
+                  className="w-full flex items-center justify-center gap-3 bg-accent hover:bg-accent-dark text-white font-medium rounded-card shadow-lifted tactile-btn voice-halo"
+                  style={{ minHeight: 64 }}
+                  aria-label={language === 'hi' ? 'आवाज से दवा जोड़ें' : 'Add medicine by voice'}
                 >
-                  <Mic size={16} />
-                  <span className="text-sm">Voice Add</span>
+                  <Mic size={26} />
+                  <span className="text-base">
+                    {language === 'hi' ? 'आवाज से जोड़ें' : 'Voice Add'}
+                  </span>
                 </button>
               </div>
             </aside>
@@ -512,120 +525,61 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
         </main>
       </div>
 
-      {/* Floating mic — only visible on mobile / tablet (sidebar hides on small screens) */}
-      <button
-        onClick={toggleMic}
-        className="lg:hidden fixed bottom-6 right-6 w-14 h-14 rounded-full bg-accent hover:bg-accent-dark flex items-center justify-center shadow-2xl border-4 border-navy-950 text-white tactile-btn mic-active-pulse z-30"
-        aria-label="Voice input"
-      >
-        <Mic size={22} />
-      </button>
+      {/* Floating Voice Add FAB — sticks to viewport on mobile / tablet.
+          Sized 80px diameter (spec: 72–80px), pulsing halo so it's
+          unmissable, paired with a text label below for clarity. Placed
+          bottom-left so it never collides with the SOS FAB. */}
+      <div className="lg:hidden fixed bottom-6 left-6 z-30 flex flex-col items-center select-none pointer-events-none">
+        <button
+          onClick={toggleMic}
+          className="w-20 h-20 rounded-full bg-accent hover:bg-accent-dark flex items-center justify-center shadow-lifted text-white tactile-btn voice-halo pointer-events-auto"
+          aria-label={language === 'hi' ? 'आवाज से दवा जोड़ें' : 'Voice input — speak to add a medicine'}
+        >
+          <Mic size={34} strokeWidth={2.2} />
+        </button>
+        <span className="mt-2 px-3 py-1 rounded-pill bg-accent text-white text-xs font-medium uppercase tracking-wider shadow-soft pointer-events-none">
+          {language === 'hi' ? 'आवाज जोड़ें' : 'Voice Add'}
+        </span>
+      </div>
 
       {/* ===== Voice modal ===== */}
       {isMicOpen && (
-        <div className="fixed inset-0 bg-navy-950/95 z-50 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
+        <div className="fixed inset-0 bg-navy-50/40 backdrop-blur-md z-50 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
           <button
             onClick={() => setIsMicOpen(false)}
-            className="absolute top-6 right-6 p-2 text-navy-100 bg-navy-850 rounded-full border border-navy-800 tactile-btn"
+            className="absolute top-6 right-6 p-3 text-navy-100 bg-navy-900 rounded-full border border-navy-800 shadow-soft tactile-btn min-tap"
+            aria-label="Close voice input"
           >
             <X size={20} />
           </button>
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-2 text-white">{t.appName} Voice Input</h2>
-            <p className="text-navy-700 text-base">
+          <div className="mb-10">
+            <h2 className="text-2xl font-medium mb-2 text-navy-50">{t.appName} Voice Input</h2>
+            <p className="text-navy-100 text-base">
               {activeTab === 'assistant' ? 'Talk to the Pulse Assistant' : t.micPrompt}
             </p>
           </div>
 
-          <div className="relative w-36 h-36 flex items-center justify-center mb-12">
-            <div className="absolute inset-0 rounded-full bg-accent/20 animate-ping"></div>
-            <div className="absolute inset-4 rounded-full bg-accent/40 animate-pulse"></div>
+          <div className="relative w-40 h-40 flex items-center justify-center mb-12">
+            <div className="absolute inset-0 rounded-full bg-accent/15 animate-ping"></div>
+            <div className="absolute inset-4 rounded-full bg-accent/25 animate-pulse"></div>
             <button
               onClick={startSpeechListening}
-              className="w-24 h-24 rounded-full bg-accent hover:bg-accent-dark flex items-center justify-center border-4 border-navy-900 text-white z-10 shadow-2xl tactile-btn"
+              className="w-28 h-28 rounded-full bg-accent hover:bg-accent-dark flex items-center justify-center text-white z-10 shadow-lifted tactile-btn"
+              aria-label="Start listening"
             >
-              {isListening ? <Volume2 size={36} className="animate-bounce" /> : <Mic size={36} />}
+              {isListening ? <Volume2 size={40} className="animate-bounce" /> : <Mic size={40} />}
             </button>
           </div>
 
-          <div className="bg-navy-900 border border-navy-800 rounded-card p-6 w-full max-w-md shadow-xl min-h-24 flex items-center justify-center">
-            <p className="text-white text-base font-medium leading-relaxed">{speechText}</p>
+          <div className="bg-navy-900 border border-navy-800 rounded-card p-6 w-full max-w-md shadow-card min-h-24 flex items-center justify-center">
+            <p className="text-navy-50 text-base leading-relaxed">{speechText}</p>
           </div>
         </div>
       )}
 
-      {/* ===== Settings drawer ===== */}
-      {isSettingsOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex justify-end animate-fade-in">
-          <div className="w-full sm:w-[420px] h-full bg-navy-950 border-l border-navy-800 flex flex-col shadow-2xl animate-slide-left p-6 overflow-y-auto thin-scroll">
-            <div className="flex items-center justify-between mb-7">
-              <h2 className="text-lg font-bold text-white">{t.apiKeySettings}</h2>
-              <button
-                onClick={() => setIsSettingsOpen(false)}
-                className="p-2 text-navy-100 bg-navy-850 rounded-card border border-navy-800 tactile-btn"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="bg-orange-500/10 border border-orange-500/30 rounded-card p-4 mb-6">
-              <div className="flex items-center space-x-2 text-accent font-semibold mb-1">
-                <ShieldAlert size={18} />
-                <span>{t.demoMode}</span>
-              </div>
-              <p className="text-xs text-navy-700 leading-normal">
-                PULSE uses browser Speech APIs and local clinical response fallbacks to ensure 100% immediate demo compatibility.
-              </p>
-              <button
-                onClick={() => setIsDemo(!isDemo)}
-                className={`mt-3 py-1.5 px-3 rounded-card font-semibold text-xs border ${
-                  isDemo ? 'bg-accent border-accent text-white' : 'border-navy-800 text-navy-100 hover:bg-navy-850'
-                } tactile-btn`}
-              >
-                {language === 'hi'
-                  ? isDemo
-                    ? 'रियल API मोड में जाएँ'
-                    : 'ऑफलाइन डेमो मोड में जाएँ'
-                  : isDemo
-                  ? 'Switch to Real API Mode'
-                  : 'Switch to Offline Demo Mode'}
-              </button>
-            </div>
-
-            <div className="space-y-5 mb-8 flex-1">
-              <div>
-                <label className="block text-sm font-semibold text-navy-100 mb-2">Sarvam AI API Key</label>
-                <input
-                  type="password"
-                  value={tempSarvam}
-                  onChange={(e) => setTempSarvam(e.target.value)}
-                  placeholder="Enter sarvam.ai API Key"
-                  className="w-full bg-navy-900 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-navy-100 mb-2">Firebase Project Config</label>
-                <textarea
-                  value={tempFirebase}
-                  onChange={(e) => setTempFirebase(e.target.value)}
-                  placeholder='{ "apiKey": "...", "projectId": "..." }'
-                  rows={6}
-                  className="w-full bg-navy-900 border border-navy-800 rounded-card py-2.5 px-3 text-xs text-white outline-none focus:border-accent font-mono"
-                />
-              </div>
-            </div>
-
-            <button
-              onClick={handleSaveSettings}
-              className="w-full bg-accent hover:bg-accent-dark text-white font-bold py-3 rounded-card shadow-xl border border-accent tactile-btn"
-            >
-              {t.saveKeys}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* ===== Settings drawer (theme, font size, contrast, voice, API keys) ===== */}
+      <AccessibilitySettings open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 };

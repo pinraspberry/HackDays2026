@@ -9,9 +9,15 @@ export type SarvamDocumentDigitizationResult = {
   status: SarvamAI.DocDigitizationJobStatusResponse;
 };
 
-const SUPPORTED_MIME_TYPES = new Set([
+const SUPPORTED_DIRECT_MIME_TYPES = new Set([
   'application/pdf',
   'application/zip',
+]);
+
+const SUPPORTED_IMAGE_MIME_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
 ]);
 
 const inferMimeType = (input: File | Blob | string): string => {
@@ -25,11 +31,25 @@ const inferMimeType = (input: File | Blob | string): string => {
 
 const isSupportedDocument = (input: File | Blob | string): boolean => {
   const mime = inferMimeType(input);
-  if (SUPPORTED_MIME_TYPES.has(mime)) return true;
+  return SUPPORTED_DIRECT_MIME_TYPES.has(mime) || SUPPORTED_IMAGE_MIME_TYPES.has(mime);
+};
 
-  // TODO: Sarvam document digitization currently exposes official SDK jobs for PDF/ZIP inputs.
-  // TODO: Add a preprocessing pipeline if image or DOC/DOCX support is required.
-  return false;
+const extensionForImage = (mime: string): string => {
+  if (mime === 'image/jpeg' || mime === 'image/jpg') return 'jpg';
+  return 'png';
+};
+
+// Sarvam's Document Intelligence accepts PDF or a ZIP of JPEG/PNG images.
+// For a single image upload we wrap it in a one-file ZIP on the fly.
+const wrapImageInZip = async (input: File | Blob | string): Promise<Blob> => {
+  const blob = await toBlob(input);
+  const mime = blob.type?.toLowerCase() || inferMimeType(input) || 'image/png';
+  const ext = extensionForImage(mime);
+
+  const zip = new JSZip();
+  const arrayBuffer = await blob.arrayBuffer();
+  zip.file(`page-1.${ext}`, arrayBuffer);
+  return await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
 };
 
 const toBlob = async (input: File | Blob | string): Promise<Blob> => {
@@ -83,9 +103,14 @@ export class SarvamDocumentService {
   static async digitizeDocument(input: File | Blob | string, language?: SarvamAI.DocDigitizationSupportedLanguage): Promise<SarvamDocumentDigitizationResult> {
     if (!isSupportedDocument(input)) {
       throw new SarvamUnsupportedDocumentError(
-        'Sarvam document digitization supports PDF/ZIP inputs in the official SDK. TODO: add a preprocessing pipeline for image and DOC/DOCX uploads.'
+        'Sarvam document digitization supports PDF, ZIP, and JPG/PNG images. Other formats are not yet handled.'
       );
     }
+
+    const mime = inferMimeType(input);
+    const blob = SUPPORTED_IMAGE_MIME_TYPES.has(mime)
+      ? await wrapImageInZip(input)
+      : await toBlob(input);
 
     const client = createSarvamClient();
     const job = await client.documentIntelligence.createJob({
@@ -93,7 +118,6 @@ export class SarvamDocumentService {
       outputFormat: 'md',
     });
 
-    const blob = await toBlob(input);
     await job.uploadFile(blob);
     const started = await job.start();
     const completed = await job.waitUntilComplete();
@@ -132,5 +156,55 @@ export class SarvamDocumentService {
   static async extractTextFromSource(input: File | Blob | string, language?: SarvamAI.DocDigitizationSupportedLanguage): Promise<string> {
     const result = await this.digitizeDocument(input, language);
     return result.extractedText;
+  }
+
+  // Convenience entry point for callers that already know they're dealing
+  // with a single image (e.g. the OCR pipeline after preprocessing). We
+  // always wrap the image in a ZIP because Sarvam DI rejects bare PNG/JPG.
+  static async digitizeImage(
+    image: File | Blob,
+    language?: SarvamAI.DocDigitizationSupportedLanguage
+  ): Promise<SarvamDocumentDigitizationResult> {
+    const zipped = await wrapImageInZip(image);
+
+    const client = createSarvamClient();
+    const job = await client.documentIntelligence.createJob({
+      language,
+      outputFormat: 'md',
+    });
+
+    await job.uploadFile(zipped);
+    const started = await job.start();
+    const completed = await job.waitUntilComplete();
+
+    if (completed.job_state !== 'Completed' && completed.job_state !== 'PartiallyCompleted') {
+      throw new SarvamDocumentProcessingError(
+        completed.error_message || `Document digitization failed with job state: ${completed.job_state}`
+      );
+    }
+
+    const downloadLinks = await job.getDownloadLinks();
+    const firstDownload = Object.values(downloadLinks.download_urls)[0];
+
+    if (!firstDownload?.file_url) {
+      throw new SarvamDocumentProcessingError('Sarvam document digitization completed, but no output file was returned.');
+    }
+
+    const downloadResponse = await fetch(firstDownload.file_url);
+    if (!downloadResponse.ok) {
+      throw new SarvamDocumentProcessingError(`Failed to download digitized output: ${downloadResponse.status}`);
+    }
+
+    const contentType = downloadResponse.headers.get('content-type') || '';
+    const bytes = await downloadResponse.arrayBuffer();
+    const extractedText = contentType.includes('zip') || firstDownload.file_url.toLowerCase().endsWith('.zip')
+      ? await readZipPayloadText(bytes)
+      : new TextDecoder().decode(bytes);
+
+    return {
+      jobId: started.job_id,
+      extractedText,
+      status: completed,
+    };
   }
 }

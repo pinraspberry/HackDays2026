@@ -227,7 +227,7 @@ export const MedicineInfoPanel: React.FC<MedicineInfoPanelProps> = ({
         type="button"
         aria-label={labels.close}
         onClick={onClose}
-        className={`absolute inset-0 bg-black/70 transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-navy-50/40 backdrop-blur-sm transition-opacity duration-300 ${
           visible ? 'opacity-100' : 'opacity-0'
         }`}
       />
@@ -251,12 +251,12 @@ export const MedicineInfoPanel: React.FC<MedicineInfoPanelProps> = ({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-extrabold text-white truncate">
+              <h2 className="text-base font-medium text-navy-50 truncate">
                 {medicineName}
               </h2>
               {info && !loading && (
                 <span
-                  className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md border ${
+                  className={`inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest px-2 py-0.5 rounded-md border ${
                     cached
                       ? 'bg-navy-950 border-navy-800 text-navy-700'
                       : 'bg-accent/10 border-accent/30 text-accent'
@@ -267,7 +267,7 @@ export const MedicineInfoPanel: React.FC<MedicineInfoPanelProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-navy-700 mt-0.5 truncate">
+            <p className="text-xs text-navy-700 mt-0.5 truncate">
               {labels.subtitle}
             </p>
           </div>
@@ -275,7 +275,7 @@ export const MedicineInfoPanel: React.FC<MedicineInfoPanelProps> = ({
             <button
               onClick={handleRefresh}
               disabled={loading || refreshing}
-              className="p-2 text-navy-100 hover:text-white bg-navy-950 border border-navy-800 rounded-card tactile-btn disabled:opacity-50"
+              className="p-2 text-navy-100 hover:text-navy-50 bg-navy-950 border border-navy-800 rounded-card tactile-btn disabled:opacity-50"
               aria-label={labels.refresh}
               style={{ minHeight: 40, minWidth: 40 }}
             >
@@ -287,7 +287,7 @@ export const MedicineInfoPanel: React.FC<MedicineInfoPanelProps> = ({
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-navy-100 hover:text-white bg-navy-950 border border-navy-800 rounded-card tactile-btn"
+              className="p-2 text-navy-100 hover:text-navy-50 bg-navy-950 border border-navy-800 rounded-card tactile-btn"
               aria-label={labels.close}
               style={{ minHeight: 40, minWidth: 40 }}
             >
@@ -301,9 +301,9 @@ export const MedicineInfoPanel: React.FC<MedicineInfoPanelProps> = ({
           {loading ? (
             <SkeletonBody loadingLabel={labels.loading} />
           ) : error ? (
-            <div className="card-navy bg-rose-500/5 border-rose-500/30 flex items-start gap-2">
-              <AlertTriangle size={16} className="text-rose-400 mt-0.5 shrink-0" />
-              <div className="text-sm text-rose-200 font-semibold">{labels.error}</div>
+            <div className="card-navy bg-danger-light border-danger/30 flex items-start gap-2">
+              <AlertTriangle size={18} className="text-danger-dark mt-0.5 shrink-0" />
+              <div className="text-sm text-danger-dark font-medium">{labels.error}</div>
             </div>
           ) : info ? (
             <>
@@ -344,7 +344,7 @@ export const MedicineInfoPanel: React.FC<MedicineInfoPanelProps> = ({
           <button
             onClick={handleSpeak}
             disabled={!info || loading || speaking}
-            className="w-full inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-white font-bold rounded-card border border-accent shadow-lg shadow-accent/20 tactile-btn disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-white font-medium rounded-card shadow-soft tactile-btn disabled:opacity-50"
             style={{ minHeight: 52 }}
           >
             {speaking ? (
@@ -359,7 +359,7 @@ export const MedicineInfoPanel: React.FC<MedicineInfoPanelProps> = ({
               </>
             )}
           </button>
-          <div className="flex items-start gap-2 text-[11px] text-navy-700 leading-relaxed">
+          <div className="flex items-start gap-2 text-xs text-navy-700 leading-relaxed">
             <ShieldAlert size={12} className="text-accent mt-0.5 shrink-0" />
             <span>{labels.disclaimer}</span>
           </div>
@@ -379,22 +379,22 @@ const toneStyles: Record<string, { bg: string; border: string; text: string; rin
     ring: 'bg-accent/15',
   },
   amber: {
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/30',
-    text: 'text-amber-400',
-    ring: 'bg-amber-500/15',
+    bg: 'bg-warning-light',
+    border: 'border-warning/30',
+    text: 'text-warning-dark',
+    ring: 'bg-warning/15',
   },
   emerald: {
-    bg: 'bg-emerald-500/10',
-    border: 'border-emerald-500/30',
-    text: 'text-emerald-400',
-    ring: 'bg-emerald-500/15',
+    bg: 'bg-success-light',
+    border: 'border-success/30',
+    text: 'text-success-dark',
+    ring: 'bg-success/15',
   },
   rose: {
-    bg: 'bg-rose-500/10',
-    border: 'border-rose-500/30',
-    text: 'text-rose-400',
-    ring: 'bg-rose-500/15',
+    bg: 'bg-danger-light',
+    border: 'border-danger/30',
+    text: 'text-danger-dark',
+    ring: 'bg-danger/15',
   },
 };
 
@@ -415,14 +415,14 @@ const InfoSection: React.FC<{
         >
           {icon}
         </span>
-        <h3 className={`text-[10px] sm:text-xs font-extrabold uppercase tracking-widest ${t.text}`}>
+        <h3 className={`text-xs sm:text-xs font-medium uppercase tracking-widest ${t.text}`}>
           <span className="mr-1.5" aria-hidden="true">
             {emoji}
           </span>
           {title}
         </h3>
       </div>
-      <p className="text-sm text-white leading-relaxed whitespace-pre-wrap">{body}</p>
+      <p className="text-sm text-navy-50 leading-relaxed whitespace-pre-wrap">{body}</p>
     </section>
   );
 };
@@ -431,7 +431,7 @@ const SkeletonBody: React.FC<{ loadingLabel: string }> = ({ loadingLabel }) => (
   <div className="space-y-3" aria-busy="true">
     <div className="flex items-center gap-2 text-navy-700">
       <Loader2 size={14} className="animate-spin text-accent" />
-      <span className="text-xs font-semibold">{loadingLabel}</span>
+      <span className="text-xs font-medium">{loadingLabel}</span>
     </div>
     {[0, 1, 2, 3].map((i) => (
       <div

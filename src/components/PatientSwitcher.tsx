@@ -4,8 +4,8 @@ import { useRole } from '../context/RoleContext';
 
 const adherenceTone = (p: number) => {
   if (p >= 80) return { bar: 'bg-success', text: 'text-success', bg: 'bg-success/10', border: 'border-success/30' };
-  if (p >= 50) return { bar: 'bg-amber-500', text: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' };
-  return { bar: 'bg-rose-500', text: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/30' };
+  if (p >= 50) return { bar: 'bg-warning', text: 'text-warning-dark', bg: 'bg-warning-light', border: 'border-warning/30' };
+  return { bar: 'bg-danger', text: 'text-danger-dark', bg: 'bg-danger-light', border: 'border-danger/30' };
 };
 
 interface PatientSwitcherProps {
@@ -45,7 +45,7 @@ export const PatientSwitcher: React.FC<PatientSwitcherProps> = ({ open, onClose 
       {/* Scrim */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 animate-fade-in"
+          className="fixed inset-0 bg-navy-50/40 backdrop-blur-sm z-40 animate-fade-in"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -65,8 +65,8 @@ export const PatientSwitcher: React.FC<PatientSwitcherProps> = ({ open, onClose 
               <Users size={16} />
             </div>
             <div className="leading-tight">
-              <div className="text-sm font-bold text-white">Linked Patients</div>
-              <div className="text-[10px] text-navy-700 font-semibold uppercase tracking-widest">
+              <div className="text-sm font-medium text-navy-50">Linked Patients</div>
+              <div className="text-xs text-navy-700 font-medium uppercase tracking-widest">
                 Caregiver Mode
               </div>
             </div>
@@ -85,7 +85,7 @@ export const PatientSwitcher: React.FC<PatientSwitcherProps> = ({ open, onClose 
         <div className="p-3 border-b border-navy-800 flex items-center gap-2">
           <button
             onClick={handleViewSelf}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-card border text-xs font-bold tactile-btn px-3 ${
+            className={`flex-1 flex items-center justify-center gap-2 rounded-card border text-xs font-medium tactile-btn px-3 ${
               activePatientId === null
                 ? 'bg-accent/10 border-accent/40 text-accent'
                 : 'bg-navy-950 border-navy-800 text-navy-100 hover:border-navy-750'
@@ -97,7 +97,7 @@ export const PatientSwitcher: React.FC<PatientSwitcherProps> = ({ open, onClose 
           </button>
           <button
             onClick={refreshLinkedPatients}
-            className="flex items-center justify-center text-navy-100 hover:text-white bg-navy-950 border border-navy-800 hover:border-navy-750 rounded-card tactile-btn px-3"
+            className="flex items-center justify-center text-navy-100 hover:text-navy-50 bg-navy-950 border border-navy-800 hover:border-navy-750 rounded-card tactile-btn px-3"
             aria-label="Refresh"
             style={{ minHeight: 48, minWidth: 48 }}
           >
@@ -110,7 +110,7 @@ export const PatientSwitcher: React.FC<PatientSwitcherProps> = ({ open, onClose 
           {linkedPatientsLoading && linkedPatients.length === 0 && (
             <div className="text-center py-12 text-navy-700">
               <RefreshCw size={28} className="mx-auto mb-2 opacity-40 animate-spin" />
-              <p className="text-xs font-semibold">Loading linked patients…</p>
+              <p className="text-xs font-medium">Loading linked patients…</p>
             </div>
           )}
 
@@ -119,8 +119,8 @@ export const PatientSwitcher: React.FC<PatientSwitcherProps> = ({ open, onClose 
               <div className="w-12 h-12 rounded-card bg-navy-850 border border-navy-800 mx-auto flex items-center justify-center mb-3">
                 <Users size={20} className="text-navy-700" />
               </div>
-              <p className="text-sm font-bold text-navy-100">No patients linked yet</p>
-              <p className="text-[11px] text-navy-700 mt-2 leading-relaxed">
+              <p className="text-sm font-medium text-navy-100">No patients linked yet</p>
+              <p className="text-xs text-navy-700 mt-2 leading-relaxed">
                 Ask the patient to share an invite code from their PULSE app.
                 Enter it on your dashboard to start viewing their care plan.
               </p>
@@ -141,19 +141,19 @@ export const PatientSwitcher: React.FC<PatientSwitcherProps> = ({ open, onClose 
                 }`}
                 style={{ minHeight: 72 }}
               >
-                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent to-accent-dark text-white font-bold text-sm flex items-center justify-center shrink-0">
+                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent to-accent-dark text-navy-50 font-medium text-sm flex items-center justify-center shrink-0">
                   {(p.name || 'P').charAt(0).toUpperCase()}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-white truncate">{p.name}</div>
+                  <div className="text-sm font-medium text-navy-50 truncate">{p.name}</div>
                   <div className="flex items-center gap-2 mt-1.5">
                     <span
-                      className={`inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${tone.bg} ${tone.border} border ${tone.text}`}
+                      className={`inline-flex items-center text-xs font-medium uppercase tracking-wider px-2 py-0.5 rounded-md ${tone.bg} ${tone.border} border ${tone.text}`}
                     >
                       {p.adherencePercent}%
                     </span>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-navy-700">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-navy-700">
                       <Pill size={10} />
                       {p.medicineCount} {p.medicineCount === 1 ? 'med' : 'meds'}
                     </span>

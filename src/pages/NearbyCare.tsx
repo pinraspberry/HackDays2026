@@ -312,7 +312,7 @@ export const NearbyCare: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-medium text-navy-50 flex items-center gap-2">
             <MapPin size={22} className="text-accent" />
             <span>{labels.title}</span>
           </h2>
@@ -321,7 +321,7 @@ export const NearbyCare: React.FC = () => {
         <button
           onClick={requestLocation}
           disabled={geoStatus === 'requesting' || loading}
-          className="inline-flex items-center gap-2 bg-navy-900 hover:bg-navy-850 border border-navy-800 text-white font-bold px-4 rounded-card tactile-btn disabled:opacity-60"
+          className="inline-flex items-center gap-2 bg-navy-900 hover:bg-navy-850 border border-navy-800 text-navy-50 font-medium px-4 rounded-card tactile-btn disabled:opacity-60"
           style={{ minHeight: 48 }}
         >
           {geoStatus === 'requesting' ? (
@@ -341,7 +341,7 @@ export const NearbyCare: React.FC = () => {
             <button
               key={chip.id}
               onClick={() => setFilter(chip.id)}
-              className={`inline-flex items-center gap-2 px-4 rounded-card border text-sm font-bold tactile-btn transition-colors ${
+              className={`inline-flex items-center gap-2 px-4 rounded-card border text-sm font-medium tactile-btn transition-colors ${
                 isActive
                   ? 'bg-accent/15 border-accent/50 text-accent'
                   : 'bg-navy-900 border-navy-800 text-navy-100 hover:border-navy-750'
@@ -363,13 +363,13 @@ export const NearbyCare: React.FC = () => {
       {/* Denied state */}
       {geoStatus === 'denied' && (
         <div className="card-navy text-center py-10">
-          <div className="w-14 h-14 rounded-card bg-rose-500/10 border border-rose-500/30 mx-auto flex items-center justify-center mb-3 text-rose-400">
+          <div className="w-14 h-14 rounded-card bg-danger-light border border-danger/30 mx-auto flex items-center justify-center mb-3 text-danger-dark">
             <AlertTriangle size={24} />
           </div>
-          <p className="text-base font-bold text-white">{labels.denied}</p>
+          <p className="text-base font-medium text-navy-50">{labels.denied}</p>
           <button
             onClick={requestLocation}
-            className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-white font-bold px-5 rounded-card border border-accent shadow-lg shadow-accent/20 tactile-btn"
+            className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-white font-medium px-5 rounded-card shadow-soft tactile-btn"
             style={{ minHeight: 48 }}
           >
             <Crosshair size={15} />
@@ -385,7 +385,7 @@ export const NearbyCare: React.FC = () => {
             <div className="absolute inset-0 flex items-center justify-center text-navy-700 z-10">
               <div className="flex items-center gap-2">
                 <Loader2 size={18} className="animate-spin text-accent" />
-                <span className="text-sm font-semibold">{labels.loading}</span>
+                <span className="text-sm font-medium">{labels.loading}</span>
               </div>
             </div>
           )}
@@ -395,7 +395,7 @@ export const NearbyCare: React.FC = () => {
 
       {/* Status / count line */}
       {coords && !loading && !error && places.length > 0 && (
-        <div className="flex items-center justify-between text-[11px] text-navy-700 font-semibold px-1">
+        <div className="flex items-center justify-between text-xs text-navy-700 font-medium px-1">
           <span>{labels.count(filteredPlaces.length)}</span>
           <span>© OpenStreetMap contributors</span>
         </div>
@@ -405,12 +405,12 @@ export const NearbyCare: React.FC = () => {
       {error && coords && (
         <button
           onClick={() => setCoords({ ...coords })}
-          className="card-navy w-full text-left flex items-start gap-3 border-rose-500/30 hover:border-rose-500/50 tactile-btn"
+          className="card-navy w-full text-left flex items-start gap-3 border-danger/30 hover:border-danger/50 tactile-btn"
         >
-          <AlertTriangle size={18} className="text-rose-400 shrink-0 mt-0.5" />
+          <AlertTriangle size={20} className="text-danger-dark shrink-0 mt-0.5" />
           <div className="flex-1">
-            <div className="text-sm font-bold text-white">{error}</div>
-            <div className="text-[11px] text-rose-300 font-semibold mt-1 inline-flex items-center gap-1">
+            <div className="text-sm font-medium text-navy-50">{error}</div>
+            <div className="text-sm text-danger-dark font-medium mt-1 inline-flex items-center gap-1">
               <RefreshCw size={11} />
               <span>{labels.retry}</span>
             </div>
@@ -464,10 +464,10 @@ export const NearbyCare: React.FC = () => {
                       {amenityIcon(p.amenity)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-white truncate">
+                      <div className="text-sm font-medium text-navy-50 truncate">
                         {p.name}
                       </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-navy-100">
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-navy-100">
                         <span className="inline-flex items-center gap-1 text-accent">
                           <Navigation size={11} />
                           {formatDistance(p.distanceMeters)}
@@ -492,7 +492,7 @@ export const NearbyCare: React.FC = () => {
                     {p.phone && (
                       <a
                         href={`tel:${p.phone}`}
-                        className="inline-flex items-center gap-1.5 bg-navy-900 hover:bg-navy-850 border border-navy-800 text-white text-xs font-bold px-3 rounded-card tactile-btn"
+                        className="inline-flex items-center gap-1.5 bg-navy-900 hover:bg-navy-850 border border-navy-800 text-navy-50 text-xs font-medium px-3 rounded-card tactile-btn"
                         style={{ minHeight: 48 }}
                       >
                         <Phone size={13} />
@@ -503,7 +503,7 @@ export const NearbyCare: React.FC = () => {
                       href={directionsUrl(p.lat, p.lng)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 bg-accent hover:bg-accent-dark text-white text-xs font-bold px-3 rounded-card border border-accent shadow-lg shadow-accent/20 tactile-btn"
+                      className="inline-flex items-center gap-1.5 bg-accent hover:bg-accent-dark text-white text-sm font-medium px-4 rounded-card shadow-soft tactile-btn"
                       style={{ minHeight: 48 }}
                     >
                       <Navigation size={13} />
@@ -521,7 +521,7 @@ export const NearbyCare: React.FC = () => {
       {!loading && !error && coords && filteredPlaces.length === 0 && (
         <div className="card-navy text-center py-8">
           <MapPin size={28} className="mx-auto mb-2 text-navy-700 opacity-50" />
-          <p className="text-sm font-bold text-navy-100">{labels.none}</p>
+          <p className="text-sm font-medium text-navy-100">{labels.none}</p>
         </div>
       )}
     </div>

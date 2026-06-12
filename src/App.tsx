@@ -3,6 +3,7 @@ import { SettingsProvider } from './context/SettingsContext';
 import { FirebaseProvider, useFirebase } from './context/FirebaseContext';
 import { MedicationProvider } from './context/MedicationContext';
 import { RoleProvider } from './context/RoleContext';
+import { AccessibilityProvider } from './context/AccessibilityContext';
 
 import { Layout } from './components/Layout';
 import { RoleGuard } from './components/RoleGuard';
@@ -59,10 +60,10 @@ const AppContent: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-navy-950 text-navy-100">
+      <div className="min-h-screen flex items-center justify-center bg-navy-950 text-navy-50">
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-sm font-semibold">Loading PULSE…</span>
+          <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" aria-hidden="true"></div>
+          <span className="text-base font-medium">Loading PULSE…</span>
         </div>
       </div>
     );
@@ -89,11 +90,13 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <SettingsProvider>
-      <FirebaseProvider>
-        <AppContent />
-      </FirebaseProvider>
-    </SettingsProvider>
+    <AccessibilityProvider>
+      <SettingsProvider>
+        <FirebaseProvider>
+          <AppContent />
+        </FirebaseProvider>
+      </SettingsProvider>
+    </AccessibilityProvider>
   );
 }
 

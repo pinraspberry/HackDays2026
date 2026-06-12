@@ -1,8 +1,175 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Nunito:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* =====================================================================
+   PULSE — Accessibility-First Design System
+   ---------------------------------------------------------------------
+   Drives colours, contrast, motion and typography off CSS variables so
+   the AccessibilityProvider can swap entire themes at runtime by
+   setting data-theme / data-high-contrast / data-font-size /
+   data-reduce-motion on <html>.
+
+   Defaults below = LIGHT theme, LARGE font size, normal contrast.
+   The provider clones the user's preferences from localStorage on
+   first paint, so what users see during boot matches their saved prefs.
+   ===================================================================== */
+
+:root,
+:root[data-theme="light"] {
+  /* ---------- light theme (default) ---------- */
+  --c-navy-975: 235 240 251; /* deepest inset well (still light) */
+  --c-navy-950: 244 247 255; /* App background — soft blue-white */
+  --c-navy-900: 255 255 255; /* Card / surface background */
+  --c-navy-850: 239 242 251; /* Subtle hover / inset row */
+  --c-navy-800: 208 216 239; /* Subtle border */
+  --c-navy-750: 180 192 224; /* Muted divider / disabled */
+  --c-navy-700:  85 102 170; /* Secondary muted text */
+  --c-navy-100:  58  70 112; /* Strong secondary text */
+  --c-navy-50:   26  42  74; /* Primary body text */
+
+  --c-accent:        59  95 192;
+  --c-accent-light:  92 127 214;
+  --c-accent-dark:   26  58 107;
+
+  --c-success:       59 158  96;
+  --c-success-light: 217 240 226;
+  --c-success-dark:  46 126  76;
+
+  --c-warning:      240 164  41;
+  --c-warning-light: 253 239 210;
+  --c-warning-dark: 185 122  20;
+
+  --c-danger:       224  68  68;
+  --c-danger-light: 251 225 225;
+  --c-danger-dark:  184  50  50;
+
+  /* ---------- shadows ---------- */
+  --shadow-soft:   0 1px 2px rgba(26, 42, 74, 0.04), 0 1px 1px rgba(26, 42, 74, 0.03);
+  --shadow-card:   0 2px 4px rgba(26, 42, 74, 0.05);
+  --shadow-lifted: 0 4px 12px rgba(26, 42, 74, 0.07);
+
+  /* ---------- border weights (lifted in high-contrast) ---------- */
+  --border-width-default: 1px;
+  --border-width-strong:  2px;
+}
+
+/* ---------- DARK theme override ----------
+   Every surface ("navy" 900 → 850 → 950) is a clearly different dark
+   navy so layered cards still read as cards. Tokens are tuned so every
+   `bg-* text-*` pair already used in the codebase still meets WCAG AA
+   in dark mode. Notably:
+     • `bg-accent text-white`   — accent is a saturated blue, 5.5:1 vs white
+     • `bg-success-light text-success-dark` — *light* token is now a deep,
+       saturated green so the banner pops on dark navy; `dark` is bright
+       text. Same pattern for warning + danger.
+*/
+:root[data-theme="dark"] {
+  --c-navy-975:   3   7  16;  /* deepest inset well */
+  --c-navy-950:  10  20  40;  /* App background — deep navy */
+  --c-navy-900:  22  33  54;  /* Card / surface */
+  --c-navy-850:  32  46  74;  /* Hover / inset row */
+  --c-navy-800:  56  76 116;  /* Border (visible against card) */
+  --c-navy-750:  90 112 152;  /* Muted divider */
+  --c-navy-700: 168 184 220;  /* Secondary muted text — AA on navy-900 */
+  --c-navy-100: 220 230 248;  /* Strong secondary text */
+  --c-navy-50:  255 255 255;  /* Primary body text */
+
+  --c-accent:        70 130 240;   /* vivid blue, 5.2:1 vs white */
+  --c-accent-light: 130 175 248;
+  --c-accent-dark:  160 195 250;   /* lighter for text on dark surfaces */
+
+  --c-success:        90 200 130;
+  --c-success-light:  32  76  56;  /* deep saturated green banner */
+  --c-success-dark:  160 240 195;  /* bright text on the banner */
+
+  --c-warning:       240 184  60;
+  --c-warning-light:  78  56  20;  /* deep amber banner */
+  --c-warning-dark:  255 220 130;
+
+  --c-danger:        240 100 100;
+  --c-danger-light:   84  32  32;  /* deep crimson banner */
+  --c-danger-dark:   255 175 175;
+
+  --shadow-soft:   0 1px 2px rgba(0, 0, 0, 0.55);
+  --shadow-card:   0 2px 6px rgba(0, 0, 0, 0.55);
+  --shadow-lifted: 0 8px 24px rgba(0, 0, 0, 0.65);
+}
+
+/* ---------- HIGH-CONTRAST override (composes with theme) ---------- */
+:root[data-high-contrast="true"] {
+  --border-width-default: 2px;
+  --border-width-strong:  3px;
+  --shadow-soft:   none;
+  --shadow-card:   none;
+  --shadow-lifted: none;
+}
+
+:root[data-theme="light"][data-high-contrast="true"] {
+  --c-navy-950: 255 255 255;   /* pure white app bg */
+  --c-navy-900: 255 255 255;
+  --c-navy-850: 235 235 235;
+  --c-navy-800:   0   0   0;   /* black borders for max visibility */
+  --c-navy-750:  60  60  60;
+  --c-navy-700:   0   0   0;
+  --c-navy-100:   0   0   0;
+  --c-navy-50:    0   0   0;   /* pure black text */
+
+  --c-accent:        0   0 204;  /* deep blue, AAA on white */
+  --c-accent-light:  0  80 220;
+  --c-accent-dark:   0   0 120;
+
+  --c-success:        0 120  60;
+  --c-success-light: 215 245 225;
+  --c-success-dark:   0  80  40;
+
+  --c-warning:      170  90   0;
+  --c-warning-light: 255 235 200;
+  --c-warning-dark: 120  60   0;
+
+  --c-danger:       190   0   0;
+  --c-danger-light: 255 220 220;
+  --c-danger-dark:  140   0   0;
+}
+
+:root[data-theme="dark"][data-high-contrast="true"] {
+  --c-navy-950:   0   0   0;   /* pure black app bg */
+  --c-navy-900:   0   0   0;
+  --c-navy-850:  20  20  20;
+  --c-navy-800: 255 255 255;   /* white borders for max visibility */
+  --c-navy-750: 220 220 220;
+  --c-navy-700: 255 255 255;
+  --c-navy-100: 255 255 255;
+  --c-navy-50:  255 255 255;   /* pure white text */
+
+  --c-accent:        0 255 255; /* pure cyan */
+  --c-accent-light:  140 255 255;
+  --c-accent-dark:   0 200 200;
+
+  --c-success:        0 255 102;
+  --c-success-light:  30  60  40;
+  --c-success-dark:  140 255 180;
+
+  --c-warning:      255 255   0; /* pure yellow */
+  --c-warning-light:  60  60  20;
+  --c-warning-dark: 255 255 140;
+
+  --c-danger:       255  60  60;
+  --c-danger-light:  60  20  20;
+  --c-danger-dark:  255 180 180;
+}
+
+/* =====================================================================
+   Font scaling — drives root font-size from a single attribute so every
+   rem-based unit (Tailwind text-* sizes, padding/margin, etc.) scales
+   together. Elderly users typically run with "large".
+   ===================================================================== */
+:root[data-font-size="small"]       { font-size: 15px; }
+:root[data-font-size="normal"]      { font-size: 17px; }
+:root[data-font-size="large"]       { font-size: 19px; } /* default */
+:root[data-font-size="extra-large"] { font-size: 22px; }
 
 @layer base {
   html, body, #root {
@@ -10,51 +177,176 @@
   }
   body {
     @apply bg-navy-950 text-navy-50 font-sans antialiased;
+    font-size: 1.0625rem;          /* ≈18px @ root 17px, ≈20px @ root 19px */
+    line-height: 1.7;
+    font-weight: 400;
+    letter-spacing: 0.01em;        /* slightly looser for Devanagari */
     -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Headings stay calm — never aggressive 700 weights. */
+  h1, h2, h3, h4, h5 {
+    @apply text-navy-50;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    line-height: 1.3;
+  }
+  h1 { font-size: 2rem; }   /* ~32px @ root 16; scales with root */
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.5rem; }
+  h4 { font-size: 1.25rem; }
+  h5 { font-size: 1.125rem; }
+
+  a {
+    @apply text-accent;
+    text-underline-offset: 3px;
+  }
+
+  input, textarea, select, button {
+    font-family: inherit;
+  }
+
+  /* Strong, visible focus ring for keyboard accessibility (AAA). */
+  :where(button, a, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+    outline: 3px solid rgb(var(--c-accent));
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  ::placeholder {
+    color: rgb(var(--c-navy-700));
+    opacity: 1;
+  }
+
+  ::selection {
+    background: rgb(var(--c-accent-light));
+    color: #FFFFFF;
   }
 }
 
-/* Tactile press feedback */
+/* =====================================================================
+   Tactile interaction — gentle press feedback.
+   ===================================================================== */
 .tactile-btn {
-  @apply active:scale-[0.97] transition-all duration-200 cursor-pointer select-none outline-none;
+  @apply active:scale-[0.985] transition-all duration-200 cursor-pointer select-none outline-none;
 }
 
-/* Card primitive — 12px radius per the new web design system */
+/* =====================================================================
+   Card surface — adapts to theme + high contrast via variables.
+   ===================================================================== */
 .card-navy {
-  @apply bg-navy-900 border border-navy-800 rounded-card p-5 shadow-lg;
+  background-color: rgb(var(--c-navy-900));
+  border: var(--border-width-default) solid rgb(var(--c-navy-800));
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: var(--shadow-soft);
 }
 
-/* Pulsing voice microphone button animation */
+/* Inset / well surface — used for nested rows inside cards. */
+.surface-inset {
+  background-color: rgb(var(--c-navy-950));
+  border: var(--border-width-default) solid rgb(var(--c-navy-800));
+  border-radius: 14px;
+}
+
+/* High-contrast: bump card borders. */
+:root[data-high-contrast="true"] .card-navy,
+:root[data-high-contrast="true"] .surface-inset {
+  border-width: var(--border-width-strong);
+}
+
+/* =====================================================================
+   Voice mic pulse — slow & calm; explicitly halts in reduce-motion mode.
+   ===================================================================== */
 @keyframes voice-pulse {
-  0%   { box-shadow: 0 0 0 0   rgba(0, 188, 212, 0.55); }
-  70%  { box-shadow: 0 0 0 18px rgba(0, 188, 212, 0);   }
-  100% { box-shadow: 0 0 0 0   rgba(0, 188, 212, 0);   }
+  0%   { box-shadow: 0 0 0 0    rgba(59, 95, 192, 0.35); }
+  70%  { box-shadow: 0 0 0 18px rgba(59, 95, 192, 0);    }
+  100% { box-shadow: 0 0 0 0    rgba(59, 95, 192, 0);    }
 }
 .mic-active-pulse {
-  animation: voice-pulse 1.6s infinite;
+  animation: voice-pulse 2s ease-out infinite;
 }
 
-/* Fade / slide animations (used across modals & drawers) */
-@keyframes fade-in   { from { opacity: 0;            } to { opacity: 1; } }
-@keyframes slide-up  { from { opacity: 0; transform: translateY(8px);  } to { opacity: 1; transform: translateY(0); } }
-@keyframes slide-left{ from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-.animate-fade-in   { animation: fade-in   .25s ease-out both; }
-.animate-slide-up  { animation: slide-up  .35s ease-out both; }
-.animate-slide-left{ animation: slide-left .35s ease-out both; }
+/* Slow halo that doesn't flash — used on the floating Voice FAB so it
+   stays visible without grabbing attention violently. */
+@keyframes voice-halo {
+  0%   { box-shadow: 0 0 0 0    rgb(var(--c-accent) / 0.35); }
+  70%  { box-shadow: 0 0 0 24px rgb(var(--c-accent) / 0);    }
+  100% { box-shadow: 0 0 0 0    rgb(var(--c-accent) / 0);    }
+}
+.voice-halo {
+  animation: voice-halo 2.6s ease-out infinite;
+}
 
-/* Custom horizontal scrolling layouts for lists */
+/* =====================================================================
+   Light animations only — no flashing, no fast motion.
+   ===================================================================== */
+@keyframes fade-in   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slide-up  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slide-left{ from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+.animate-fade-in   { animation: fade-in   .3s ease-out both; }
+.animate-slide-up  { animation: slide-up  .3s ease-out both; }
+.animate-slide-left{ animation: slide-left .3s ease-out both; }
+
+/* Respect both the OS preference and the in-app reduce-motion toggle. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+:root[data-reduce-motion="true"] *,
+:root[data-reduce-motion="true"] *::before,
+:root[data-reduce-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* =====================================================================
+   Scrollbars.
+   ===================================================================== */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Pretty thin scroll for chat/reports */
-.thin-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.thin-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
 .thin-scroll::-webkit-scrollbar-track { background: transparent; }
-.thin-scroll::-webkit-scrollbar-thumb { background: #262d36; border-radius: 999px; }
-.thin-scroll::-webkit-scrollbar-thumb:hover { background: #3a414b; }
+.thin-scroll::-webkit-scrollbar-thumb { background: rgb(var(--c-navy-800)); border-radius: 999px; }
+.thin-scroll::-webkit-scrollbar-thumb:hover { background: rgb(var(--c-navy-750)); }
 
-/* Pulse progress circle styling */
+/* =====================================================================
+   Progress ring (used on the dashboard).
+   ===================================================================== */
 .progress-ring__circle {
   transition: stroke-dashoffset 0.35s;
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
+}
+
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+.min-tap {
+  min-height: 48px;
+  min-width: 48px;
+}
+.min-tap-lg {
+  min-height: 56px;
+  min-width: 56px;
+}
+
+/* Striped/textured pattern overlay — used on missed-dose surfaces so
+   the state is conveyed without relying on colour alone. */
+.pattern-stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgb(var(--c-danger) / 0.10) 0,
+    rgb(var(--c-danger) / 0.10) 6px,
+    transparent 6px,
+    transparent 12px
+  );
 }

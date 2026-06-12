@@ -162,10 +162,10 @@ export const CaregiverEnterCodeCard: React.FC = () => {
           <KeyRound size={18} />
         </div>
         <div>
-          <h3 className="text-base font-bold text-white">
+          <h3 className="text-base font-medium text-navy-50">
             {language === 'hi' ? 'मरीज़ से जुड़ें' : 'Link a patient'}
           </h3>
-          <p className="text-[11px] text-navy-700">
+          <p className="text-xs text-navy-700">
             {language === 'hi'
               ? 'मरीज़ से 6-अक्षर का इनवाइट कोड लें और यहाँ डालें।'
               : 'Ask the patient to share their 6-character invite code from PULSE.'}
@@ -174,7 +174,7 @@ export const CaregiverEnterCodeCard: React.FC = () => {
       </div>
 
       {error && (
-        <div className="mb-3 flex items-start gap-2 bg-rose-500/10 border border-rose-500/30 rounded-card p-3 text-xs text-rose-300 animate-fade-in">
+        <div className="mb-3 flex items-start gap-2 bg-warning-light border border-warning/30 rounded-card p-3 text-sm text-warning-dark animate-fade-in">
           <AlertCircle size={14} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </div>
@@ -193,13 +193,13 @@ export const CaregiverEnterCodeCard: React.FC = () => {
           placeholder="A8B7C2"
           autoComplete="one-time-code"
           maxLength={6}
-          className="flex-1 bg-navy-950 border border-navy-800 rounded-card py-2 px-4 text-lg text-center text-white tracking-[0.4em] font-mono outline-none focus:border-accent uppercase"
+          className="flex-1 bg-navy-950 border border-navy-800 rounded-card py-2 px-4 text-lg text-center text-navy-50 tracking-[0.4em] font-mono outline-none focus:border-accent uppercase"
           style={{ minHeight: 48 }}
         />
         <button
           type="submit"
           disabled={submitting || code.trim().length !== 6}
-          className="inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-white font-bold px-5 rounded-card border border-accent shadow-lg shadow-accent/20 tactile-btn disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-white font-medium px-5 rounded-card shadow-soft tactile-btn disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ minHeight: 48 }}
         >
           {submitting ? (
@@ -216,7 +216,7 @@ export const CaregiverEnterCodeCard: React.FC = () => {
         </button>
       </form>
 
-      <div className="flex items-center gap-2 mt-3 text-[11px] text-navy-700">
+      <div className="flex items-center gap-2 mt-3 text-xs text-navy-700">
         <Users size={12} />
         <span>
           {language === 'hi'
