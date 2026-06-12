@@ -140,7 +140,7 @@ export const Medicines: React.FC = () => {
       evening:   { hi: 'शाम',   en: 'Evening'   },
       night:     { hi: 'रात',   en: 'Night'     },
     };
-    return map[slot][language as 'hi' | 'en'] || map[slot].en;
+    return map[slot]?.[language as 'hi' | 'en'] || slot;
   };
 
   return (
