@@ -142,10 +142,10 @@ export const AdherenceReport: React.FC = () => {
     <div className="space-y-6">
       
       {/* 1. Header and quick actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white">{t.reportTitle}</h2>
-          <p className="text-sm text-navy-700 mt-0.5">
+          <h2 className="text-2xl sm:text-3xl font-medium text-navy-50 tracking-tight">{t.reportTitle}</h2>
+          <p className="text-base text-navy-700 mt-1.5">
             {language === 'hi'
               ? 'पिछले 7 दिनों का दवाई एडहेरेंस सारांश'
               : 'A 7-day summary of your medication adherence'}
@@ -153,73 +153,71 @@ export const AdherenceReport: React.FC = () => {
         </div>
         <button
           onClick={exportPDFReport}
-          className="self-start sm:self-auto flex items-center gap-2 bg-accent hover:bg-accent-dark text-white font-bold py-2.5 px-4 rounded-card shadow-lg shadow-accent/20 border border-accent text-sm tactile-btn"
+          className="self-start sm:self-auto flex items-center gap-2 bg-accent hover:bg-accent-dark text-white font-medium px-5 rounded-card shadow-soft text-sm tactile-btn"
+          style={{ minHeight: 48 }}
         >
-          <FileText size={16} />
+          <FileText size={18} />
           <span>{t.exportPdf}</span>
         </button>
       </div>
 
       {/* 2. Key stats metrics grids */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card-navy flex flex-col items-center justify-center p-5 text-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-accent/5 rounded-full blur-xl"></div>
-          <span className="text-3xl font-extrabold text-accent font-sans">{adherenceRate}%</span>
-          <span className="text-xs text-navy-750 font-bold uppercase tracking-wider mt-1">{t.adherenceRate}</span>
+        <div className="card-navy flex flex-col items-center justify-center p-6 text-center">
+          <span className="text-4xl font-medium text-accent">{adherenceRate}%</span>
+          <span className="text-xs text-navy-700 font-medium uppercase tracking-wider mt-2">{t.adherenceRate}</span>
         </div>
 
-        <div className="card-navy flex flex-col items-center justify-center p-5 text-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-orange-500/5 rounded-full blur-xl"></div>
-          <span className="text-3xl font-extrabold text-orange-500 font-sans flex items-center justify-center space-x-1">
-            <Flame size={24} fill="#F97316" stroke="none" />
+        <div className="card-navy flex flex-col items-center justify-center p-6 text-center">
+          <span className="text-4xl font-medium text-warning-dark flex items-center justify-center gap-2">
+            <Flame size={26} fill="#F0A429" stroke="none" />
             <span>{streak}</span>
           </span>
-          <span className="text-xs text-navy-750 font-bold uppercase tracking-wider mt-1">{t.streakText}</span>
+          <span className="text-xs text-navy-700 font-medium uppercase tracking-wider mt-2">{t.streakText}</span>
         </div>
 
-        <div className="card-navy flex flex-col items-center justify-center p-5 text-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-success/5 rounded-full blur-xl"></div>
-          <span className="text-3xl font-extrabold text-success font-sans">{medications.length}</span>
-          <span className="text-xs text-navy-750 font-bold uppercase tracking-wider mt-1">
+        <div className="card-navy flex flex-col items-center justify-center p-6 text-center">
+          <span className="text-4xl font-medium text-success-dark">{medications.length}</span>
+          <span className="text-xs text-navy-700 font-medium uppercase tracking-wider mt-2">
             {language === 'hi' ? 'सक्रिय दवाइयाँ' : 'Active Medicines'}
           </span>
         </div>
       </div>
 
       {/* 3. SVG 7-Day adherence bar chart (custom & zero dependencies!) */}
-      <div className="card-navy text-left space-y-4">
-        <h3 className="text-sm font-bold text-navy-700 uppercase tracking-widest pl-1">7-Day History Chart</h3>
+      <div className="card-navy text-left space-y-5">
+        <h3 className="text-xs font-medium text-navy-700 uppercase tracking-wider">7-Day History Chart</h3>
 
-        <div className="flex items-end justify-between h-44 pt-4 border-b border-navy-800 pb-1 px-2 relative">
+        <div className="flex items-end justify-between h-48 pt-4 border-b border-navy-800 pb-1 px-2 relative">
           
           {/* Background grid lines */}
-          <div className="absolute top-4 left-0 right-0 border-t border-navy-850 border-dashed text-[9px] text-navy-800 font-bold pr-1 text-right">100%</div>
-          <div className="absolute top-24 left-0 right-0 border-t border-navy-850 border-dashed text-[9px] text-navy-800 font-bold pr-1 text-right">50%</div>
+          <div className="absolute top-4 left-0 right-0 border-t border-dashed border-navy-800 text-xs text-navy-700 font-medium pr-1 text-right">100%</div>
+          <div className="absolute top-24 left-0 right-0 border-t border-dashed border-navy-800 text-xs text-navy-700 font-medium pr-1 text-right">50%</div>
 
           {past7DaysData.map((day, dIdx) => {
-            const barHeight = Math.max((day.percent / 100) * 120, 6); // min height for zero percent visual feedback
+            const barHeight = Math.max((day.percent / 100) * 130, 6);
             return (
-              <div key={dIdx} className="flex flex-col items-center flex-1 space-y-2 group z-10">
-                <div className="relative w-7 flex justify-center items-end h-32">
+              <div key={dIdx} className="flex flex-col items-center flex-1 space-y-3 group z-10">
+                <div className="relative w-8 flex justify-center items-end h-36">
                   
                   {/* Tooltip on hover */}
-                  <div className="absolute bottom-full mb-1 bg-navy-950 text-[10px] text-white px-2 py-0.5 rounded border border-navy-850 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  <div className="absolute bottom-full mb-2 bg-navy-50 text-xs font-medium text-white px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-soft">
                     {day.percent}% ({day.taken}/{day.total})
                   </div>
 
                   <div 
                     style={{ height: `${barHeight}px` }}
-                    className={`w-5 rounded-t-lg transition-all duration-500 cursor-pointer ${
+                    className={`w-7 rounded-t-md transition-all duration-500 cursor-pointer ${
                       day.percent >= 80 
-                        ? 'bg-success shadow-lg shadow-success/10' 
+                        ? 'bg-success' 
                         : day.percent >= 50 
-                        ? 'bg-accent shadow-lg shadow-accent/10'
+                        ? 'bg-accent'
                         : 'bg-navy-750'
                     }`}
                   ></div>
                 </div>
                 
-                <span className="text-xs font-bold text-navy-100 uppercase">{day.label}</span>
+                <span className="text-xs font-medium text-navy-100 uppercase tracking-wider">{day.label}</span>
               </div>
             );
           })}
@@ -227,34 +225,34 @@ export const AdherenceReport: React.FC = () => {
       </div>
 
       {/* 4. Missed doses logs list */}
-      <div className="card-navy text-left space-y-4">
-        <div className="flex items-center space-x-2 text-rose-500">
-          <AlertCircle size={20} />
-          <h3 className="text-sm font-bold uppercase tracking-widest">{t.missedDoses}</h3>
+      <div className="card-navy text-left space-y-5">
+        <div className="flex items-center gap-2 text-warning-dark">
+          <AlertCircle size={22} />
+          <h3 className="text-xs font-medium uppercase tracking-wider">{t.missedDoses}</h3>
         </div>
 
         <div className="space-y-3">
           {missedDosesList.length === 0 ? (
-            <div className="text-center py-4 flex flex-col items-center justify-center space-y-1">
-              <CheckCircle2 className="text-success mb-1" size={24} />
-              <p className="text-xs text-navy-100 font-bold">Perfect compliance!</p>
-              <p className="text-[10px] text-navy-850">No missed doses identified in the past week.</p>
+            <div className="text-center py-6 flex flex-col items-center justify-center gap-2">
+              <CheckCircle2 className="text-success-dark mb-1" size={32} />
+              <p className="text-base text-navy-50 font-medium">Perfect compliance!</p>
+              <p className="text-sm text-navy-700">No missed doses identified in the past week.</p>
             </div>
           ) : (
             missedDosesList.slice(0, 5).map((miss, idx) => (
               <div 
                 key={idx}
-                className="bg-navy-950 border border-navy-800/60 rounded-card py-3 px-4 flex items-center justify-between"
+                className="bg-warning-light border border-warning/30 rounded-card py-4 px-4 flex items-center justify-between gap-3"
               >
-                <div className="flex items-center space-x-3 text-left">
-                  <XCircle size={18} className="text-rose-500" />
+                <div className="flex items-center gap-3 text-left">
+                  <XCircle size={22} className="text-warning-dark shrink-0" />
                   <div>
-                    <span className="font-extrabold text-white text-elder-sm">{miss.name}</span>
-                    <p className="text-[10px] text-navy-700 font-bold uppercase mt-0.5">{miss.slot} slot</p>
+                    <span className="font-medium text-navy-50 text-base">{miss.name}</span>
+                    <p className="text-xs text-warning-dark font-medium uppercase mt-1 tracking-wider">{miss.slot} slot</p>
                   </div>
                 </div>
 
-                <span className="text-xs font-semibold text-navy-100">{miss.date}</span>
+                <span className="text-sm font-medium text-navy-700">{miss.date}</span>
               </div>
             ))
           )}

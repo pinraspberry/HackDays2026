@@ -1,9 +1,14 @@
 import { extractTextFromPdf } from '../services/pdfExtractor';
+import {
+  extractPrescription,
+  type PrescriptionExtractionResult,
+} from '../services/prescriptionPipeline';
 import React, { useState, useMemo } from 'react';
 import { useMedication } from '../context/MedicationContext';
 import type { MedDocument } from '../context/MedicationContext';
 import { useSettings } from '../context/SettingsContext';
 import { useActivePatient } from '../context/RoleContext';
+import { useDisplayMedications } from '../hooks/useDisplayMedications';
 import {
   FileText,
   Calendar,
@@ -14,12 +19,17 @@ import {
   X,
   Search,
   UploadCloud,
+  CheckCircle,
+  AlertTriangle,
+  Sparkles,
+  Plus,
+  Languages,
 } from 'lucide-react';
 
 type DocType = 'prescription' | 'report' | 'summary' | 'all';
 
 export const Documents: React.FC = () => {
-  const { documents, addDocument, deleteDocument } = useMedication();
+  const { documents, addDocument, deleteDocument, addMedication } = useMedication();
   const { t, language } = useSettings();
   const { isOwnData, isCaregiverViewing } = useActivePatient();
   const canMutate = isOwnData;
@@ -32,55 +42,164 @@ export const Documents: React.FC = () => {
 
   const [previewDoc, setPreviewDoc] = useState<MedDocument | null>(null);
 
+  // Inline banner after a successful prescription extraction. Lets the
+  // user import the detected medicines into their schedule without
+  // navigating to the Medicines tab.
+  const [extractionResult, setExtractionResult] =
+    useState<PrescriptionExtractionResult | null>(null);
+  const [extractionFileName, setExtractionFileName] = useState<string>('');
+  const [importingMeds, setImportingMeds] = useState(false);
+
   // Filter / search
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<DocType>('all');
 
+  const readFileAsDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error || new Error('FileReader failed'));
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+
+  const isImageFile = (file: File): boolean =>
+    (file.type?.toLowerCase() || '').startsWith('image/') ||
+    /\.(png|jpe?g|webp|bmp)$/i.test(file.name || '');
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    console.log('FILE SELECTED:', file);
     if (!file) return;
 
     setIsUploading(true);
-    const reader = new FileReader();
+    setExtractionResult(null);
+    setExtractionFileName('');
 
-    reader.onload = async (event) => {
-      const base64 = event.target?.result as string;
+    try {
+      const base64 = await readFileAsDataUrl(file);
       let extractedText = '';
+      let detectedDoctor = '';
+      let detectedHospital = '';
+      let detectedDate = '';
+      let detectedMedicines: string[] = [];
+      let pipelineResult: PrescriptionExtractionResult | null = null;
 
-      if (file.type === 'application/pdf') {
+      const shouldRunPipeline = type === 'prescription' || isImageFile(file);
+
+      if (shouldRunPipeline) {
+        try {
+          pipelineResult = await extractPrescription(file);
+          extractedText = pipelineResult.rawText || '';
+          detectedDoctor = pipelineResult.doctor || '';
+          detectedHospital = pipelineResult.hospital || '';
+          detectedDate = pipelineResult.date || '';
+          detectedMedicines = pipelineResult.medicines.map((m) => m.name);
+        } catch (err) {
+          console.error('PRESCRIPTION PIPELINE FAILED:', err);
+        }
+      } else if (file.type === 'application/pdf') {
         try {
           extractedText = await extractTextFromPdf(file);
-          console.log('PDF TEXT EXTRACTED:', extractedText.substring(0, 500));
         } catch (err) {
           console.error('PDF EXTRACTION FAILED:', err);
         }
       }
 
-      try {
-        await addDocument({
-          name: docName || file.name.split('.')[0] || 'Medical Document',
-          type,
-          date: new Date().toISOString().split('T')[0],
-          doctor: doctor || 'Dr. Amit Sharma',
-          hospital: hospital || 'City Health Clinic',
-          medicines: ['Aspirin', 'Paracetamol'],
-          fileUrl: base64,
-          extractedText,
-        });
+      const today = new Date().toISOString().split('T')[0];
 
-        setDocName('');
-        setDoctor('');
-        setHospital('');
-      } catch (err) {
-        console.error('UPLOAD ERROR:', err);
-      } finally {
-        setIsUploading(false);
+      await addDocument({
+        name: docName || file.name.split('.')[0] || 'Medical Document',
+        type,
+        date: detectedDate || today,
+        doctor: doctor || detectedDoctor || '',
+        hospital: hospital || detectedHospital || '',
+        medicines: detectedMedicines,
+        fileUrl: base64,
+        extractedText,
+      });
+
+      setDocName('');
+      setDoctor('');
+      setHospital('');
+
+      if (pipelineResult && (pipelineResult.medicines.length > 0 || pipelineResult.warnings.length > 0)) {
+        setExtractionResult(pipelineResult);
+        setExtractionFileName(file.name);
       }
-    };
-
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('UPLOAD ERROR:', err);
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
   };
+
+  const slotForFrequency = (
+    frequency: string,
+    timing: ('morning' | 'afternoon' | 'evening' | 'night')[]
+  ): ('morning' | 'afternoon' | 'evening' | 'night')[] => {
+    if (timing && timing.length > 0) return timing;
+    const lc = (frequency || '').toLowerCase();
+    if (lc.includes('twice')) return ['morning', 'night'];
+    if (lc.includes('three') || lc.includes('thrice') || lc.includes('tid') || lc.includes('tds')) {
+      return ['morning', 'afternoon', 'night'];
+    }
+    if (lc.includes('four') || lc.includes('qid') || lc.includes('qds')) {
+      return ['morning', 'afternoon', 'evening', 'night'];
+    }
+    return ['morning'];
+  };
+
+  const importMedicines = async () => {
+    if (!extractionResult || !canMutate) return;
+    setImportingMeds(true);
+    try {
+      for (const med of extractionResult.medicines) {
+        if (!med.name) continue;
+        const timing = slotForFrequency(med.frequency, med.timing);
+        const frequencyLabel =
+          med.frequency ||
+          (timing.length === 1
+            ? 'Once Daily'
+            : timing.length === 2
+            ? 'Twice Daily'
+            : timing.length === 3
+            ? 'Three Times Daily'
+            : 'Multiple Daily');
+
+        await addMedication({
+          name: med.name,
+          dosage: med.dosage || '1 Tablet',
+          frequency: frequencyLabel,
+          timing,
+          startDate: extractionResult.date || new Date().toISOString().split('T')[0],
+          instructions: med.instructions || '',
+        });
+      }
+    } catch (err) {
+      console.error('IMPORT MEDICINES FAILED:', err);
+    } finally {
+      setImportingMeds(false);
+      setExtractionResult(null);
+      setExtractionFileName('');
+    }
+  };
+
+  const dismissExtractionBanner = () => {
+    setExtractionResult(null);
+    setExtractionFileName('');
+  };
+
+  // Render-time translation of the extracted medicines for the banner.
+  // The canonical English copy (extractionResult.medicines) is what gets
+  // written to Firestore when the user clicks "Import to my schedule".
+  const extractedMedsForDisplay = useMemo(
+    () => extractionResult?.medicines ?? [],
+    [extractionResult]
+  );
+  const {
+    displayMedications: displayExtractedMeds,
+    isTranslating: isTranslatingExtracted,
+  } = useDisplayMedications(extractedMedsForDisplay, language);
 
   const filteredDocs = useMemo(() => {
     return documents.filter(d => {
@@ -99,12 +218,12 @@ export const Documents: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white">
+          <h2 className="text-2xl sm:text-3xl font-medium text-navy-50 tracking-tight">
             {language === 'hi' ? 'पर्चे और रिपोर्ट्स' : t.docTitle}
           </h2>
-          <p className="text-sm text-navy-700 mt-0.5">
+          <p className="text-base text-navy-700 mt-1.5">
             {language === 'hi'
               ? 'प्रिस्क्रिप्शन और लैब रिपोर्ट्स अपलोड और प्रबंधित करें'
               : 'Upload and manage prescriptions, lab reports, and discharge summaries'}
@@ -113,11 +232,11 @@ export const Documents: React.FC = () => {
       </div>
 
       {isCaregiverViewing && (
-        <div className="card-navy bg-success/[0.04] border-success/25 flex items-start gap-2 py-3">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-success mt-0.5">
+        <div className="card-navy bg-success-light border-success/30 flex items-start gap-3 py-4">
+          <span className="text-xs font-medium uppercase tracking-wider text-success-dark mt-0.5 shrink-0">
             Read-only
           </span>
-          <span className="text-xs text-navy-100">
+          <span className="text-sm text-navy-50 leading-relaxed">
             {language === 'hi'
               ? 'आप मरीज़ के दस्तावेज़ देख रहे हैं। केवल मरीज़ ही अपलोड कर सकता है।'
               : "You are viewing a linked patient's documents. Only the patient can upload new files."}
@@ -132,10 +251,10 @@ export const Documents: React.FC = () => {
         <div className="lg:col-span-2">
           <div className="card-navy space-y-4 sticky top-20">
             <div>
-              <h3 className="text-sm font-bold text-white">
+              <h3 className="text-sm font-medium text-navy-50">
                 {language === 'hi' ? 'नया दस्तावेज़ अपलोड करें' : t.uploadDoc}
               </h3>
-              <p className="text-[11px] text-navy-700 mt-0.5">
+              <p className="text-xs text-navy-700 mt-0.5">
                 {language === 'hi'
                   ? 'दस्तावेज़ का विवरण भरें और फ़ाइल चुनें'
                   : 'Fill the details below and pick a file to upload'}
@@ -143,7 +262,7 @@ export const Documents: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-navy-100 mb-1.5 uppercase tracking-widest">
+              <label className="block text-xs font-medium text-navy-100 mb-1.5 uppercase tracking-widest">
                 {language === 'hi' ? 'दस्तावेज़ शीर्षक' : 'Document Label'}
               </label>
               <input
@@ -151,18 +270,18 @@ export const Documents: React.FC = () => {
                 value={docName}
                 onChange={(e) => setDocName(e.target.value)}
                 placeholder="e.g. AIIMS Cardiology Prescription"
-                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent"
+                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-navy-50 outline-none focus:border-accent"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-navy-100 mb-1.5 uppercase tracking-widest">
+              <label className="block text-xs font-medium text-navy-100 mb-1.5 uppercase tracking-widest">
                 {language === 'hi' ? 'प्रकार' : 'Type'}
               </label>
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as any)}
-                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent cursor-pointer"
+                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-navy-50 outline-none focus:border-accent cursor-pointer"
               >
                 <option value="prescription">Prescription पर्चा</option>
                 <option value="report">Lab Report लैब रिपोर्ट</option>
@@ -172,7 +291,7 @@ export const Documents: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-navy-100 mb-1.5 uppercase tracking-widest">
+                <label className="block text-xs font-medium text-navy-100 mb-1.5 uppercase tracking-widest">
                   {language === 'hi' ? 'डॉक्टर का नाम' : 'Doctor Name'}
                 </label>
                 <input
@@ -180,11 +299,11 @@ export const Documents: React.FC = () => {
                   value={doctor}
                   onChange={(e) => setDoctor(e.target.value)}
                   placeholder="Dr. Amit Sharma"
-                  className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent"
+                  className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-navy-50 outline-none focus:border-accent"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-navy-100 mb-1.5 uppercase tracking-widest">
+                <label className="block text-xs font-medium text-navy-100 mb-1.5 uppercase tracking-widest">
                   {language === 'hi' ? 'अस्पताल / लैब' : 'Hospital / Lab'}
                 </label>
                 <input
@@ -192,7 +311,7 @@ export const Documents: React.FC = () => {
                   value={hospital}
                   onChange={(e) => setHospital(e.target.value)}
                   placeholder="City Health Clinic"
-                  className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent"
+                  className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-navy-50 outline-none focus:border-accent"
                 />
               </div>
             </div>
@@ -202,15 +321,15 @@ export const Documents: React.FC = () => {
               {isUploading ? (
                 <>
                   <div className="w-7 h-7 border-2 border-accent border-t-transparent rounded-full animate-spin mb-2"></div>
-                  <span className="font-bold text-white">Uploading…</span>
+                  <span className="font-medium text-navy-50">Uploading…</span>
                 </>
               ) : (
                 <>
                   <UploadCloud size={28} className="text-accent mb-2" />
-                  <span className="font-bold text-white">
+                  <span className="font-medium text-navy-50">
                     {language === 'hi' ? 'फ़ाइल चुनें या ड्रैग करें' : 'Click or drop file here'}
                   </span>
-                  <span className="text-[11px] text-navy-700 mt-1">PDF, JPG, PNG</span>
+                  <span className="text-xs text-navy-700 mt-1">PDF, JPG, PNG</span>
                 </>
               )}
               <input
@@ -223,12 +342,132 @@ export const Documents: React.FC = () => {
 
             <div className="bg-accent/5 border border-accent/15 rounded-card p-3 flex items-start gap-2">
               <FileText size={14} className="text-accent mt-0.5 shrink-0" />
-              <p className="text-[11px] text-navy-100 leading-relaxed">
+              <p className="text-xs text-navy-100 leading-relaxed">
                 {language === 'hi'
                   ? 'अपलोड किए गए दस्तावेज़ को आप AI सहायक से किसी भी समय पूछ सकते हैं।'
                   : 'You can ask the AI Assistant about any uploaded document at any time.'}
               </p>
             </div>
+
+            {extractionResult && (
+              <div className="space-y-3 animate-fade-in">
+                <div className="card-navy bg-success/[0.05] border-success/30 p-3 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <Sparkles size={16} className="text-success mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-sm font-medium text-navy-50">
+                        {language === 'hi'
+                          ? `${extractionResult.medicines.length} दवाइयाँ मिलीं`
+                          : `Found ${extractionResult.medicines.length} medicine${extractionResult.medicines.length === 1 ? '' : 's'}`}
+                      </h4>
+                      <p className="text-xs text-navy-100 mt-0.5 truncate">
+                        {extractionFileName}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        <span className="text-xs font-medium uppercase tracking-widest px-1.5 py-0.5 rounded bg-navy-950 border border-navy-800 text-navy-100">
+                          {extractionResult.ocrSource.replace(/-/g, ' ')}
+                        </span>
+                        {extractionResult.usedHandwritingFallback && (
+                          <span className="text-xs font-medium uppercase tracking-widest px-1.5 py-0.5 rounded bg-accent/15 border border-accent/30 text-accent">
+                            {language === 'hi' ? 'हस्तलेख मोड' : 'Handwriting mode'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={dismissExtractionBanner}
+                      className="p-1.5 text-navy-700 hover:text-navy-50 rounded-card border border-navy-800 hover:border-navy-700 tactile-btn shrink-0"
+                      title="Dismiss"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+
+                  {displayExtractedMeds.length > 0 && (
+                    <>
+                      {isTranslatingExtracted && language !== 'en' && (
+                        <div className="flex items-center gap-1.5 text-xs text-navy-700 font-medium -mb-1">
+                          <Languages size={11} className="text-accent animate-pulse" />
+                          <span>
+                            {language === 'hi' ? 'अनुवाद हो रहा है…' : 'Translating…'}
+                          </span>
+                        </div>
+                      )}
+                      <ul className="space-y-1.5">
+                        {displayExtractedMeds.map((m, i) => (
+                          <li
+                            key={i}
+                            className="bg-navy-950 border border-navy-800 rounded-card px-2.5 py-1.5"
+                          >
+                            <div className="text-xs font-medium text-navy-50 truncate">{m.name_display}</div>
+                            <div className="text-xs text-navy-100 mt-0.5">
+                              {[m.dosage_display, m.frequency_display].filter(Boolean).join(' • ')}
+                              {m.timing.length > 0 && (
+                                <span className="text-accent"> • {m.timing.join(', ')}</span>
+                              )}
+                            </div>
+                            {m.instructions_display && (
+                              <div className="text-xs text-navy-700 mt-0.5 italic">
+                                {m.instructions_display}
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+
+                  {extractionResult.medicines.length > 0 && (
+                    <button
+                      onClick={importMedicines}
+                      disabled={importingMeds}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-success hover:bg-success-dark text-white font-medium rounded-card shadow-soft tactile-btn disabled:opacity-60 disabled:cursor-not-allowed"
+                      style={{ minHeight: 48 }}
+                    >
+                      {importingMeds ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span className="text-sm">
+                            {language === 'hi' ? 'जोड़ा जा रहा है…' : 'Adding to schedule…'}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={18} strokeWidth={2.5} />
+                          <span className="text-sm">
+                            {language === 'hi'
+                              ? 'मेरी दवाइयों में जोड़ें'
+                              : 'Import to my schedule'}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {extractionResult.warnings.length > 0 && (
+                  <div className="bg-warning-light border border-warning/40 rounded-card p-4 flex items-start gap-3">
+                    <AlertTriangle size={18} className="text-warning-dark mt-0.5 shrink-0" />
+                    <div className="text-xs text-navy-100 leading-relaxed space-y-0.5">
+                      {extractionResult.warnings.map((w, i) => (
+                        <div key={i}>{w}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {extractionResult.medicines.length === 0 && extractionResult.rawText && (
+                  <div className="bg-navy-950 border border-navy-800 rounded-card p-2.5 text-xs text-navy-100 leading-relaxed flex items-start gap-2">
+                    <CheckCircle size={13} className="text-accent mt-0.5 shrink-0" />
+                    <span>
+                      {language === 'hi'
+                        ? 'दस्तावेज़ पढ़ा गया पर कोई दवा पहचानी नहीं गई। आप दवाइयाँ खुद जोड़ सकते हैं।'
+                        : 'Document read successfully, but no medicines were recognised. You can add them manually from the Medicines tab.'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
         )}
@@ -248,13 +487,13 @@ export const Documents: React.FC = () => {
                     ? 'नाम, डॉक्टर, अस्पताल खोजें…'
                     : 'Search by name, doctor, hospital…'
                 }
-                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 pl-9 pr-3 text-sm text-white outline-none focus:border-accent"
+                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 pl-9 pr-3 text-sm text-navy-50 outline-none focus:border-accent"
               />
             </div>
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value as DocType)}
-              className="bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent cursor-pointer min-w-[140px]"
+              className="bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-navy-50 outline-none focus:border-accent cursor-pointer min-w-[140px]"
             >
               <option value="all">{language === 'hi' ? 'सभी' : 'All Types'}</option>
               <option value="prescription">{language === 'hi' ? 'प्रिस्क्रिप्शन' : 'Prescription'}</option>
@@ -267,7 +506,7 @@ export const Documents: React.FC = () => {
           {filteredDocs.length === 0 ? (
             <div className="card-navy text-center py-16">
               <FileText size={48} className="mx-auto mb-3 text-navy-750 opacity-40" />
-              <p className="text-base font-bold text-navy-100">
+              <p className="text-base font-medium text-navy-100">
                 {documents.length === 0
                   ? language === 'hi'
                     ? 'कोई दस्तावेज़ नहीं'
@@ -294,10 +533,10 @@ export const Documents: React.FC = () => {
                       <FileText size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="bg-navy-950 border border-navy-800 px-1.5 py-0.5 rounded text-[9px] font-bold text-navy-100 uppercase tracking-widest">
+                      <span className="bg-navy-950 border border-navy-800 px-1.5 py-0.5 rounded text-xs font-medium text-navy-100 uppercase tracking-widest">
                         {doc.type}
                       </span>
-                      <h3 className="text-sm font-extrabold text-white mt-1 leading-tight truncate">
+                      <h3 className="text-sm font-medium text-navy-50 mt-1 leading-tight truncate">
                         {doc.name}
                       </h3>
                     </div>
@@ -305,25 +544,27 @@ export const Documents: React.FC = () => {
                     <div className="flex flex-col gap-1.5 shrink-0">
                       <button
                         onClick={() => setPreviewDoc(doc)}
-                        className="p-2 text-accent hover:text-white bg-navy-950 rounded-card border border-navy-800 hover:border-accent/40 tactile-btn"
+                        className="text-accent hover:text-white bg-navy-950 hover:bg-accent rounded-card border border-navy-800 hover:border-accent tactile-btn flex items-center justify-center min-tap"
                         title={t.viewInline}
+                        aria-label={`Preview ${doc.name}`}
                       >
-                        <Eye size={14} />
+                        <Eye size={18} />
                       </button>
                       {canMutate && (
                         <button
                           onClick={() => {
                             if (confirm(`Delete ${doc.name}?`)) deleteDocument(doc.id);
                           }}
-                          className="p-2 text-navy-700 hover:text-rose-400 bg-navy-950 hover:bg-rose-500/10 border border-navy-800 hover:border-rose-500/30 rounded-card tactile-btn"
+                          className="text-navy-700 hover:text-danger bg-navy-950 hover:bg-danger-light border border-navy-800 hover:border-danger rounded-card tactile-btn flex items-center justify-center min-tap"
+                          aria-label={`Delete ${doc.name}`}
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={18} />
                         </button>
                       )}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px] font-semibold text-navy-100">
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs font-medium text-navy-100">
                     <div className="flex items-center gap-1.5">
                       <User size={12} className="text-navy-700" />
                       <span className="truncate">{doc.doctor}</span>
@@ -343,7 +584,7 @@ export const Documents: React.FC = () => {
                       {doc.medicines.map((m, i) => (
                         <span
                           key={i}
-                          className="bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-md text-[10px] font-bold text-accent"
+                          className="bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-md text-xs font-medium text-accent"
                         >
                           {m}
                         </span>
@@ -360,25 +601,28 @@ export const Documents: React.FC = () => {
       {/* Preview modal */}
       {previewDoc && (
         <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 bg-navy-50/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setPreviewDoc(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-navy-900 border border-navy-800 rounded-card w-full max-w-3xl h-[90vh] flex flex-col shadow-2xl animate-slide-up"
+            className="bg-navy-900 border border-navy-800 rounded-card w-full max-w-3xl h-[90vh] flex flex-col shadow-lifted animate-slide-up"
+            role="dialog"
+            aria-label={previewDoc.name}
           >
-            <div className="p-4 border-b border-navy-800 flex items-center justify-between">
+            <div className="p-5 border-b border-navy-800 flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <h3 className="font-bold text-white truncate">{previewDoc.name}</h3>
-                <p className="text-[11px] text-navy-700">
+                <h3 className="font-medium text-navy-50 truncate text-lg">{previewDoc.name}</h3>
+                <p className="text-sm text-navy-700 mt-1">
                   {previewDoc.doctor} • {previewDoc.hospital} • {previewDoc.date}
                 </p>
               </div>
               <button
                 onClick={() => setPreviewDoc(null)}
-                className="p-2 text-navy-100 bg-navy-850 border border-navy-800 rounded-card tactile-btn shrink-0"
+                className="text-navy-50 hover:text-accent bg-navy-850 hover:bg-accent/10 border border-navy-800 hover:border-accent rounded-card tactile-btn shrink-0 flex items-center justify-center min-tap"
+                aria-label="Close preview"
               >
-                <X size={16} />
+                <X size={20} />
               </button>
             </div>
 
@@ -398,7 +642,7 @@ export const Documents: React.FC = () => {
               ) : (
                 <div className="text-center p-6 text-navy-700">
                   <FileText size={48} className="mx-auto mb-2 opacity-40" />
-                  <p className="font-bold">PDF / Complex Format Document</p>
+                  <p className="font-medium">PDF / Complex Format Document</p>
                   <p className="text-xs text-navy-700/70 mt-1">
                     Natively stored base64 structures are active.
                   </p>

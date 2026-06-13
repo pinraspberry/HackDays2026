@@ -212,7 +212,7 @@ export const CaregiverLink: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-medium text-navy-50 flex items-center gap-2">
             <Sparkles size={20} className="text-accent" />
             <span>{language === 'hi' ? 'केयरगिवर लिंक' : 'Link a Caregiver'}</span>
           </h2>
@@ -225,9 +225,9 @@ export const CaregiverLink: React.FC = () => {
       </div>
 
       {error && (
-        <div className="card-navy bg-rose-500/5 border-rose-500/30 flex items-start gap-2">
-          <AlertCircle size={14} className="text-rose-400 mt-0.5 shrink-0" />
-          <span className="text-xs text-rose-300">{error}</span>
+        <div className="card-navy bg-warning-light border-warning/30 flex items-start gap-2">
+          <AlertCircle size={18} className="text-warning-dark mt-0.5 shrink-0" />
+          <span className="text-sm text-warning-dark font-medium">{error}</span>
         </div>
       )}
 
@@ -240,10 +240,10 @@ export const CaregiverLink: React.FC = () => {
                 <Plus size={16} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">
+                <h3 className="text-sm font-medium text-navy-50">
                   {language === 'hi' ? 'नया इनवाइट कोड' : 'New invite code'}
                 </h3>
-                <p className="text-[11px] text-navy-700">
+                <p className="text-xs text-navy-700">
                   {language === 'hi'
                     ? '24 घंटे तक मान्य'
                     : 'Valid for 24 hours'}
@@ -254,7 +254,7 @@ export const CaregiverLink: React.FC = () => {
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-white font-bold px-4 rounded-card border border-accent shadow-lg shadow-accent/20 tactile-btn disabled:opacity-60 text-xs"
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-white font-medium px-5 rounded-card shadow-soft tactile-btn disabled:opacity-60 text-sm"
               style={{ minHeight: 48 }}
             >
               {generating ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
@@ -265,10 +265,10 @@ export const CaregiverLink: React.FC = () => {
           {livePending.length === 0 ? (
             <div className="bg-navy-950 border border-dashed border-navy-800 rounded-card p-6 text-center">
               <FileText size={28} className="mx-auto mb-2 text-navy-700 opacity-50" />
-              <p className="text-sm font-bold text-navy-100">
+              <p className="text-sm font-medium text-navy-100">
                 {language === 'hi' ? 'कोई सक्रिय कोड नहीं' : 'No active invite codes'}
               </p>
-              <p className="text-[11px] text-navy-700 mt-1 max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs text-navy-700 mt-1 max-w-sm mx-auto leading-relaxed">
                 {language === 'hi'
                   ? 'जनरेट पर क्लिक करें — कोड को केयरगिवर के साथ सुरक्षित रूप से साझा करें।'
                   : 'Click Generate to create a one-time code. Share it privately with your caregiver.'}
@@ -286,16 +286,16 @@ export const CaregiverLink: React.FC = () => {
                     {/* Code display */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-navy-700">
+                        <div className="text-xs font-medium uppercase tracking-widest text-navy-700">
                           {language === 'hi' ? 'इनवाइट कोड' : 'Invite Code'}
                         </div>
-                        <div className="font-mono font-extrabold text-3xl sm:text-4xl text-white tracking-[0.3em] mt-1">
+                        <div className="font-mono font-medium text-3xl sm:text-4xl text-navy-50 tracking-[0.3em] mt-1">
                           {link.inviteCode}
                         </div>
                       </div>
                       <button
                         onClick={() => handleCopy(link.inviteCode)}
-                        className="inline-flex items-center gap-1.5 bg-accent/10 hover:bg-accent/20 border border-accent/30 text-accent font-bold rounded-card px-3 tactile-btn"
+                        className="inline-flex items-center gap-1.5 bg-accent/10 hover:bg-accent/20 border border-accent/30 text-accent font-medium rounded-card px-3 tactile-btn"
                         style={{ minHeight: 48 }}
                       >
                         {copied ? <Check size={15} /> : <Copy size={15} />}
@@ -307,23 +307,23 @@ export const CaregiverLink: React.FC = () => {
                     <div className="flex items-center gap-3 bg-navy-900 border border-navy-800 rounded-card p-3">
                       <Clock size={14} className="text-accent" />
                       <div className="flex-1">
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-navy-700">
+                        <div className="text-xs font-medium uppercase tracking-widest text-navy-700">
                           {language === 'hi' ? 'समाप्त होने में' : 'Expires in'}
                         </div>
-                        <div className="font-mono font-bold text-sm text-white">
+                        <div className="font-mono font-medium text-sm text-navy-50">
                           {formatCountdown(remaining)}
                         </div>
                       </div>
                       <button
                         onClick={() => handleCancelPending(link)}
-                        className="text-[11px] font-bold text-rose-400 hover:text-rose-300 tactile-btn"
+                        className="text-sm font-medium text-danger-dark hover:text-danger tactile-btn"
                         style={{ minHeight: 36 }}
                       >
                         {language === 'hi' ? 'रद्द करें' : 'Cancel'}
                       </button>
                     </div>
 
-                    <div className="flex items-start gap-2 text-[11px] text-navy-700">
+                    <div className="flex items-start gap-2 text-xs text-navy-700">
                       <ShieldCheck size={13} className="text-success mt-0.5" />
                       <span>
                         {language === 'hi'
@@ -346,10 +346,10 @@ export const CaregiverLink: React.FC = () => {
                 <Users size={16} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">
+                <h3 className="text-sm font-medium text-navy-50">
                   {language === 'hi' ? 'जुड़े हुए केयरगिवर' : 'Active caregivers'}
                 </h3>
-                <p className="text-[11px] text-navy-700">
+                <p className="text-xs text-navy-700">
                   {activeLinks.length} {activeLinks.length === 1 ? 'caregiver' : 'caregivers'}
                 </p>
               </div>
@@ -359,10 +359,10 @@ export const CaregiverLink: React.FC = () => {
           {activeLinks.length === 0 ? (
             <div className="bg-navy-950 border border-dashed border-navy-800 rounded-card p-6 text-center">
               <Users size={28} className="mx-auto mb-2 text-navy-700 opacity-50" />
-              <p className="text-sm font-bold text-navy-100">
+              <p className="text-sm font-medium text-navy-100">
                 {language === 'hi' ? 'कोई केयरगिवर नहीं जुड़ा' : 'No caregivers connected yet'}
               </p>
-              <p className="text-[11px] text-navy-700 mt-1 leading-relaxed max-w-sm mx-auto">
+              <p className="text-xs text-navy-700 mt-1 leading-relaxed max-w-sm mx-auto">
                 {language === 'hi'
                   ? 'जब केयरगिवर आपका कोड डालेगा तो वह यहाँ दिखेगा।'
                   : 'Once a caregiver enters your code, they will appear here with their permissions.'}
@@ -377,26 +377,26 @@ export const CaregiverLink: React.FC = () => {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-accent-dark text-white font-bold text-sm flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-accent-dark text-navy-50 font-medium text-sm flex items-center justify-center shrink-0">
                         {(link.caregiverName || 'C').charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-white truncate">
+                        <div className="text-sm font-medium text-navy-50 truncate">
                           {link.caregiverName || link.caregiverId || 'Caregiver'}
                         </div>
-                        <div className="text-[11px] text-success font-semibold uppercase tracking-wider">
+                        <div className="text-xs text-success font-medium uppercase tracking-wider">
                           {language === 'hi' ? 'सक्रिय' : 'Active'}
                         </div>
                       </div>
                     </div>
                     <button
                       onClick={() => handleRevoke(link)}
-                      className="inline-flex items-center gap-1.5 text-rose-400 hover:text-rose-300 bg-navy-900 hover:bg-rose-500/10 border border-rose-500/20 rounded-card px-3 tactile-btn"
+                      className="inline-flex items-center gap-1.5 text-danger-dark hover:text-danger bg-navy-900 hover:bg-danger-light border border-danger/20 hover:border-danger/40 rounded-card px-4 tactile-btn"
                       style={{ minHeight: 40 }}
                       aria-label="Revoke access"
                     >
                       <Trash2 size={13} />
-                      <span className="text-xs font-bold">
+                      <span className="text-xs font-medium">
                         {language === 'hi' ? 'हटाएँ' : 'Revoke'}
                       </span>
                     </button>
@@ -433,8 +433,8 @@ export const CaregiverLink: React.FC = () => {
       {/* footer help */}
       <div className="card-navy bg-accent/[0.03] border-accent/15 flex items-start gap-3">
         <ShieldCheck size={16} className="text-accent mt-0.5 shrink-0" />
-        <div className="text-[12px] text-navy-100 leading-relaxed">
-          <strong className="text-white">
+        <div className="text-sm text-navy-100 leading-relaxed">
+          <strong className="text-navy-50">
             {language === 'hi' ? 'सुरक्षा सुझाव:' : 'Safety tip:'}
           </strong>{' '}
           {language === 'hi'
@@ -466,7 +466,7 @@ const PermissionToggle: React.FC<{
   >
     <span className={`flex items-center gap-2 ${checked ? 'text-accent' : 'text-navy-100'}`}>
       {icon}
-      <span className="text-[11px] font-bold uppercase tracking-wide">{label}</span>
+      <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
     </span>
     <span
       className={`relative inline-block w-8 h-4 rounded-full transition-colors ${

@@ -63,7 +63,7 @@ const statusPillStyles = (
 ): string => {
   if (status === 'completed') return 'bg-success/10 border-success/30 text-success';
   if (status === 'cancelled') return 'bg-navy-800 border-navy-700 text-navy-100';
-  return 'bg-rose-500/10 border-rose-500/30 text-rose-400';
+  return 'bg-danger-light border-danger/30 text-danger-dark';
 };
 
 export const Appointments: React.FC = () => {
@@ -452,11 +452,11 @@ export const Appointments: React.FC = () => {
         <div className="flex flex-wrap items-start gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-base font-extrabold text-white truncate">
+              <h3 className="text-base font-medium text-navy-50 truncate">
                 Dr. {apt.doctorName || '—'}
               </h3>
               {apt.specialty && (
-                <span className="inline-flex items-center gap-1 bg-accent/10 border border-accent/30 text-accent text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md">
+                <span className="inline-flex items-center gap-1 bg-accent/10 border border-accent/30 text-accent text-xs font-medium uppercase tracking-widest px-2 py-0.5 rounded-md">
                   <Stethoscope size={11} />
                   {apt.specialty}
                 </span>
@@ -465,7 +465,7 @@ export const Appointments: React.FC = () => {
           </div>
           {opts.isPast && (
             <span
-              className={`inline-flex items-center text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md border ${statusPillStyles(pastStatusTone)}`}
+              className={`inline-flex items-center text-xs font-medium uppercase tracking-widest px-2 py-0.5 rounded-md border ${statusPillStyles(pastStatusTone)}`}
             >
               {pastStatusTone === 'completed'
                 ? t.statusCompleted
@@ -477,7 +477,7 @@ export const Appointments: React.FC = () => {
         </div>
 
         {/* Meta row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 text-[12px] font-semibold text-navy-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 text-sm font-medium text-navy-100">
           <div className="flex items-center gap-1.5 min-w-0">
             <Building size={13} className="text-navy-700 shrink-0" />
             <span className="truncate">{apt.hospitalName || '—'}</span>
@@ -492,24 +492,24 @@ export const Appointments: React.FC = () => {
         {(linkedCount > 0 || apt.reminderSet || isMissed) && (
           <div className="flex flex-wrap gap-1.5">
             {linkedCount > 0 && (
-              <span className="inline-flex items-center gap-1 bg-navy-950 border border-navy-800 text-navy-100 text-[10px] font-bold px-2 py-0.5 rounded-md">
+              <span className="inline-flex items-center gap-1 bg-navy-950 border border-navy-800 text-navy-100 text-xs font-medium px-2 py-0.5 rounded-md">
                 <FileText size={11} className="text-accent" />
                 {t.linkedCount(linkedCount)}
               </span>
             )}
             {apt.reminderSet && !opts.isPast ? (
-              <span className="inline-flex items-center gap-1 bg-success/10 border border-success/30 text-success text-[10px] font-bold px-2 py-0.5 rounded-md">
+              <span className="inline-flex items-center gap-1 bg-success/10 border border-success/30 text-success text-xs font-medium px-2 py-0.5 rounded-md">
                 <Bell size={11} />
                 {t.reminderOn}
               </span>
             ) : !apt.reminderSet && !opts.isPast ? (
-              <span className="inline-flex items-center gap-1 bg-navy-950 border border-navy-800 text-navy-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+              <span className="inline-flex items-center gap-1 bg-navy-950 border border-navy-800 text-navy-700 text-xs font-medium px-2 py-0.5 rounded-md">
                 <BellOff size={11} />
                 {t.reminderOff}
               </span>
             ) : null}
             {isMissed && (
-              <span className="inline-flex items-center gap-1 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[10px] font-bold px-2 py-0.5 rounded-md">
+              <span className="inline-flex items-center gap-1 bg-danger-light border border-danger/30 text-danger-dark text-xs font-medium px-2.5 py-1 rounded-pill">
                 <AlertTriangle size={11} />
                 {t.statusMissed}
               </span>
@@ -530,7 +530,7 @@ export const Appointments: React.FC = () => {
             <button
               onClick={() => handleMarkComplete(apt)}
               disabled={busyId === apt.id}
-              className="inline-flex items-center gap-1.5 bg-success/15 hover:bg-success/25 border border-success/40 text-success font-bold text-xs px-3 rounded-card tactile-btn disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 bg-success/15 hover:bg-success/25 border border-success/40 text-success font-medium text-xs px-3 rounded-card tactile-btn disabled:opacity-60"
               style={{ minHeight: 48 }}
             >
               {busyId === apt.id ? (
@@ -543,7 +543,7 @@ export const Appointments: React.FC = () => {
           )}
           <button
             onClick={() => toggleDocsPanel(apt)}
-            className="inline-flex items-center gap-1.5 bg-navy-900 hover:bg-navy-850 border border-navy-800 hover:border-accent/40 text-navy-100 font-bold text-xs px-3 rounded-card tactile-btn"
+            className="inline-flex items-center gap-1.5 bg-navy-900 hover:bg-navy-850 border border-navy-800 hover:border-accent/40 text-navy-100 font-medium text-xs px-3 rounded-card tactile-btn"
             style={{ minHeight: 48 }}
           >
             <LinkIcon size={13} />
@@ -558,7 +558,7 @@ export const Appointments: React.FC = () => {
             <button
               onClick={() => handleCancel(apt)}
               disabled={busyId === apt.id}
-              className="inline-flex items-center gap-1.5 bg-navy-900 hover:bg-navy-850 border border-navy-800 text-navy-100 font-bold text-xs px-3 rounded-card tactile-btn disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 bg-navy-900 hover:bg-navy-850 border border-navy-800 text-navy-100 font-medium text-xs px-3 rounded-card tactile-btn disabled:opacity-60"
               style={{ minHeight: 48 }}
             >
               <X size={13} />
@@ -568,7 +568,7 @@ export const Appointments: React.FC = () => {
           <button
             onClick={() => handleDelete(apt)}
             disabled={busyId === apt.id}
-            className="ml-auto inline-flex items-center gap-1.5 bg-navy-900 hover:bg-rose-500/10 border border-navy-800 hover:border-rose-500/30 text-navy-700 hover:text-rose-400 font-bold text-xs px-3 rounded-card tactile-btn disabled:opacity-60"
+            className="ml-auto inline-flex items-center gap-1.5 bg-navy-900 hover:bg-danger-light border border-navy-800 hover:border-danger/30 text-navy-700 hover:text-danger-dark font-medium text-sm px-4 rounded-card tactile-btn disabled:opacity-60"
             style={{ minHeight: 48 }}
           >
             <Trash2 size={13} />
@@ -580,7 +580,7 @@ export const Appointments: React.FC = () => {
         {isExpanded && (
           <div className="mt-2 bg-navy-950 border border-navy-800 rounded-card p-3 space-y-2 animate-fade-in">
             {documents.length === 0 ? (
-              <p className="text-[11px] text-navy-700 font-semibold leading-relaxed">
+              <p className="text-xs text-navy-700 font-medium leading-relaxed">
                 {t.noDocs}
               </p>
             ) : (
@@ -607,10 +607,10 @@ export const Appointments: React.FC = () => {
                         />
                         <FileText size={14} className="text-accent shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <div className="text-xs font-bold text-white truncate">
+                          <div className="text-xs font-medium text-navy-50 truncate">
                             {d.name}
                           </div>
-                          <div className="text-[10px] text-navy-700 font-semibold uppercase tracking-widest truncate">
+                          <div className="text-xs text-navy-700 font-medium uppercase tracking-widest truncate">
                             {d.type} · {d.date}
                           </div>
                         </div>
@@ -621,7 +621,7 @@ export const Appointments: React.FC = () => {
                 <button
                   onClick={() => handleSaveLinks(apt)}
                   disabled={busyId === apt.id}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-white font-bold text-xs px-3 rounded-card border border-accent shadow-lg shadow-accent/20 tactile-btn disabled:opacity-60"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-white font-medium text-sm px-4 rounded-card shadow-soft tactile-btn disabled:opacity-60"
                   style={{ minHeight: 48 }}
                 >
                   {busyId === apt.id ? (
@@ -644,7 +644,7 @@ export const Appointments: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-medium text-navy-50 flex items-center gap-2">
             <CalendarCheck size={22} className="text-accent" />
             <span>{t.title}</span>
           </h2>
@@ -655,7 +655,7 @@ export const Appointments: React.FC = () => {
             setIsFormOpen((v) => !v);
             setFormError(null);
           }}
-          className="inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-white font-bold px-5 rounded-card border border-accent shadow-lg shadow-accent/20 tactile-btn self-start sm:self-auto"
+          className="inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-white font-medium px-5 rounded-card shadow-soft tactile-btn self-start sm:self-auto"
           style={{ minHeight: 48 }}
         >
           {isFormOpen ? <X size={15} /> : <CalendarPlus size={15} />}
@@ -670,10 +670,10 @@ export const Appointments: React.FC = () => {
         <div className="card-navy bg-success/[0.05] border-success/30 flex items-center gap-2 py-3">
           <Users size={14} className="text-success shrink-0" />
           <span className="text-xs text-navy-100">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-success mr-2">
+            <span className="text-xs font-medium uppercase tracking-widest text-success mr-2">
               {t.addingFor}
             </span>
-            <span className="font-semibold text-white">
+            <span className="font-medium text-navy-50">
               {activePatientName || 'patient'}
             </span>
           </span>
@@ -688,11 +688,11 @@ export const Appointments: React.FC = () => {
         >
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-accent" />
-            <h3 className="text-sm font-bold text-white">{t.formTitle}</h3>
+            <h3 className="text-sm font-medium text-navy-50">{t.formTitle}</h3>
           </div>
 
           {formError && (
-            <div className="flex items-start gap-2 bg-rose-500/10 border border-rose-500/30 rounded-card p-3 text-xs text-rose-300">
+            <div className="flex items-start gap-2 bg-warning-light border border-warning/30 rounded-card p-3 text-sm text-warning-dark font-medium">
               <AlertTriangle size={14} className="mt-0.5 shrink-0" />
               <span>{formError}</span>
             </div>
@@ -700,7 +700,7 @@ export const Appointments: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
-              <label className="block text-[10px] font-bold text-navy-100 mb-1.5 uppercase tracking-widest">
+              <label className="block text-xs font-medium text-navy-100 mb-1.5 uppercase tracking-widest">
                 {t.doctor}
               </label>
               <input
@@ -710,12 +710,12 @@ export const Appointments: React.FC = () => {
                   setDraft((p) => ({ ...p, doctorName: e.target.value }))
                 }
                 placeholder="Amit Sharma"
-                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent"
+                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-navy-50 outline-none focus:border-accent"
                 style={{ minHeight: 48 }}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-navy-100 mb-1.5 uppercase tracking-widest">
+              <label className="block text-xs font-medium text-navy-100 mb-1.5 uppercase tracking-widest">
                 {t.specialty}
               </label>
               <input
@@ -725,12 +725,12 @@ export const Appointments: React.FC = () => {
                   setDraft((p) => ({ ...p, specialty: e.target.value }))
                 }
                 placeholder="Cardiology"
-                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent"
+                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-navy-50 outline-none focus:border-accent"
                 style={{ minHeight: 48 }}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-navy-100 mb-1.5 uppercase tracking-widest">
+              <label className="block text-xs font-medium text-navy-100 mb-1.5 uppercase tracking-widest">
                 {t.hospital}
               </label>
               <input
@@ -740,12 +740,12 @@ export const Appointments: React.FC = () => {
                   setDraft((p) => ({ ...p, hospitalName: e.target.value }))
                 }
                 placeholder="AIIMS Delhi"
-                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent"
+                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-navy-50 outline-none focus:border-accent"
                 style={{ minHeight: 48 }}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-navy-100 mb-1.5 uppercase tracking-widest">
+              <label className="block text-xs font-medium text-navy-100 mb-1.5 uppercase tracking-widest">
                 {t.date}
               </label>
               <input
@@ -754,12 +754,12 @@ export const Appointments: React.FC = () => {
                 onChange={(e) =>
                   setDraft((p) => ({ ...p, date: e.target.value }))
                 }
-                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent"
+                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-navy-50 outline-none focus:border-accent"
                 style={{ minHeight: 48 }}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-navy-100 mb-1.5 uppercase tracking-widest">
+              <label className="block text-xs font-medium text-navy-100 mb-1.5 uppercase tracking-widest">
                 {t.time}
               </label>
               <input
@@ -768,12 +768,12 @@ export const Appointments: React.FC = () => {
                 onChange={(e) =>
                   setDraft((p) => ({ ...p, time: e.target.value }))
                 }
-                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent"
+                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-navy-50 outline-none focus:border-accent"
                 style={{ minHeight: 48 }}
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-[10px] font-bold text-navy-100 mb-1.5 uppercase tracking-widest">
+              <label className="block text-xs font-medium text-navy-100 mb-1.5 uppercase tracking-widest">
                 {t.notes}
               </label>
               <textarea
@@ -783,7 +783,7 @@ export const Appointments: React.FC = () => {
                 }
                 rows={3}
                 placeholder={t.notesPh}
-                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-white outline-none focus:border-accent"
+                className="w-full bg-navy-950 border border-navy-800 rounded-card py-2.5 px-3 text-sm text-navy-50 outline-none focus:border-accent"
               />
             </div>
           </div>
@@ -805,7 +805,7 @@ export const Appointments: React.FC = () => {
               className={`inline-flex items-center gap-2 ${draft.reminderSet ? 'text-accent' : 'text-navy-100'}`}
             >
               {draft.reminderSet ? <Bell size={14} /> : <BellOff size={14} />}
-              <span className="text-xs font-bold uppercase tracking-wider">
+              <span className="text-xs font-medium uppercase tracking-wider">
                 {t.reminder}
               </span>
             </span>
@@ -829,7 +829,7 @@ export const Appointments: React.FC = () => {
                 setIsFormOpen(false);
                 setFormError(null);
               }}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-navy-900 hover:bg-navy-850 border border-navy-800 text-navy-100 font-bold rounded-card tactile-btn"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-navy-900 hover:bg-navy-850 border border-navy-800 text-navy-100 font-medium rounded-card tactile-btn"
               style={{ minHeight: 48 }}
             >
               <X size={14} />
@@ -838,7 +838,7 @@ export const Appointments: React.FC = () => {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-white font-bold rounded-card border border-accent shadow-lg shadow-accent/20 tactile-btn disabled:opacity-60"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-white font-medium rounded-card shadow-soft tactile-btn disabled:opacity-60"
               style={{ minHeight: 48 }}
             >
               {saving ? (
@@ -856,7 +856,7 @@ export const Appointments: React.FC = () => {
       {loadingList && (
         <div className="card-navy flex items-center justify-center gap-2 py-10 text-navy-700">
           <Loader2 size={16} className="animate-spin text-accent" />
-          <span className="text-sm font-semibold">Loading appointments…</span>
+          <span className="text-sm font-medium">Loading appointments…</span>
         </div>
       )}
 
@@ -864,17 +864,17 @@ export const Appointments: React.FC = () => {
       {!loadingList && (
         <section className="space-y-3">
           <div className="flex items-center gap-2 border-b border-navy-800 pb-2">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-navy-100">
+            <h3 className="text-sm font-medium uppercase tracking-widest text-navy-100">
               {t.upcoming}
             </h3>
-            <span className="text-[10px] font-bold text-navy-700">
+            <span className="text-xs font-medium text-navy-700">
               {upcoming.length}
             </span>
           </div>
           {upcoming.length === 0 ? (
             <div className="card-navy text-center py-8">
               <CalendarCheck size={28} className="mx-auto mb-2 text-navy-700 opacity-50" />
-              <p className="text-sm font-bold text-navy-100">{t.emptyUpcoming}</p>
+              <p className="text-sm font-medium text-navy-100">{t.emptyUpcoming}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -888,17 +888,17 @@ export const Appointments: React.FC = () => {
       {!loadingList && (
         <section className="space-y-3">
           <div className="flex items-center gap-2 border-b border-navy-800 pb-2">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-navy-100">
+            <h3 className="text-sm font-medium uppercase tracking-widest text-navy-100">
               {t.past}
             </h3>
-            <span className="text-[10px] font-bold text-navy-700">
+            <span className="text-xs font-medium text-navy-700">
               {past.length}
             </span>
           </div>
           {past.length === 0 ? (
             <div className="card-navy text-center py-8">
               <Clock size={28} className="mx-auto mb-2 text-navy-700 opacity-50" />
-              <p className="text-sm font-bold text-navy-100">{t.emptyPast}</p>
+              <p className="text-sm font-medium text-navy-100">{t.emptyPast}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

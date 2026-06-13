@@ -35,8 +35,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ activeTab, setActiveTab, c
     return (
       <div className="min-h-screen flex items-center justify-center bg-navy-950 text-navy-100">
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-semibold">Loading your profile…</span>
+          <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          <span className="text-base font-medium">Loading your profile…</span>
         </div>
       </div>
     );

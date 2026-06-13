@@ -178,46 +178,47 @@ export const CaregiverSOSBanner: React.FC = () => {
 
   return (
     <div
-      className="sticky top-16 z-30 bg-rose-600/95 border-y-2 border-rose-400/70 shadow-lg shadow-rose-900/30 animate-fade-in"
+      className="sticky top-[72px] z-30 bg-danger border-b border-danger-dark shadow-soft animate-fade-in"
       role="alert"
       aria-live="assertive"
     >
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center gap-3 px-4 lg:px-6 py-3 text-left tactile-btn"
-        style={{ minHeight: 48 }}
+        className="w-full flex items-center gap-3 px-4 lg:px-8 py-3 text-left tactile-btn"
+        style={{ minHeight: 56 }}
+        aria-expanded={expanded}
       >
         {/* pulsing dot */}
         <span className="relative inline-flex items-center justify-center w-6 h-6 shrink-0">
-          <span className="absolute inset-0 rounded-full bg-white/50 animate-ping" />
+          <span className="absolute inset-0 rounded-full bg-white/40 animate-ping" />
           <span className="relative w-3 h-3 rounded-full bg-white" />
         </span>
 
-        <AlertTriangle size={20} className="text-white shrink-0" />
+        <AlertTriangle size={22} className="text-white shrink-0" />
 
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-extrabold uppercase tracking-widest text-rose-100">
+          <div className="text-xs font-medium uppercase tracking-wider text-white/85">
             {labels.sosTitle}
           </div>
-          <div className="text-sm sm:text-base font-bold text-white truncate">
+          <div className="text-sm sm:text-base font-medium text-white truncate">
             {count === 1
               ? `${headline.patientName} — ${labels.sosOne}`
               : `${count} ${labels.sosMany}`}
           </div>
         </div>
 
-        <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider text-white/80">
+        <span className="hidden sm:inline text-xs font-medium uppercase tracking-wider text-white/85">
           {expanded ? labels.collapse : labels.expand}
         </span>
         {expanded ? (
-          <ChevronUp size={18} className="text-white shrink-0" />
+          <ChevronUp size={20} className="text-white shrink-0" />
         ) : (
-          <ChevronDown size={18} className="text-white shrink-0" />
+          <ChevronDown size={20} className="text-white shrink-0" />
         )}
       </button>
 
       {expanded && (
-        <div className="bg-rose-950/40 border-t border-rose-400/40 px-4 lg:px-6 py-3 space-y-2">
+        <div className="bg-danger-dark border-t border-white/15 px-4 lg:px-8 py-3 space-y-2">
           {alerts.map((a) => {
             const mapUrl =
               a.lat != null && a.lng != null
@@ -227,17 +228,17 @@ export const CaregiverSOSBanner: React.FC = () => {
             return (
               <div
                 key={a.id}
-                className="flex flex-col sm:flex-row sm:items-center gap-3 bg-navy-950/70 border border-rose-400/40 rounded-card p-3"
+                className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white/10 border border-white/20 rounded-card p-4"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-white truncate">
+                  <div className="text-base font-medium text-white truncate">
                     {a.patientName}
                   </div>
-                  <div className="flex items-center gap-2 mt-1 text-[11px] font-semibold text-rose-200">
+                  <div className="flex items-center gap-2 mt-1 text-sm font-medium text-white/85">
                     <span>{formatRelative(a.timestampMs, language)}</span>
                     {a.lat == null && (
                       <span className="inline-flex items-center gap-1">
-                        <MapPin size={11} />
+                        <MapPin size={14} />
                         <span>{labels.noLocation}</span>
                       </span>
                     )}
@@ -250,23 +251,23 @@ export const CaregiverSOSBanner: React.FC = () => {
                       href={mapUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 bg-navy-900 hover:bg-navy-850 text-white text-xs font-bold px-3 rounded-card border border-rose-400/40 tactile-btn"
+                      className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-medium px-4 rounded-card border border-white/30 tactile-btn"
                       style={{ minHeight: 48 }}
                     >
-                      <MapPin size={13} />
+                      <MapPin size={16} />
                       <span>{labels.viewMap}</span>
                     </a>
                   )}
                   <button
                     onClick={() => handleAck(a.id)}
                     disabled={isAcking}
-                    className="inline-flex items-center gap-1.5 bg-white hover:bg-rose-100 text-rose-700 text-xs font-extrabold px-4 rounded-card border-2 border-white tactile-btn disabled:opacity-60"
+                    className="inline-flex items-center gap-2 bg-white hover:bg-navy-950 text-danger-dark text-sm font-medium px-5 rounded-card shadow-soft tactile-btn disabled:opacity-60"
                     style={{ minHeight: 48 }}
                   >
                     {isAcking ? (
-                      <Loader2 size={13} className="animate-spin" />
+                      <Loader2 size={16} className="animate-spin" />
                     ) : (
-                      <Check size={14} strokeWidth={3} />
+                      <Check size={18} strokeWidth={2.5} />
                     )}
                     <span>{labels.acknowledge}</span>
                   </button>

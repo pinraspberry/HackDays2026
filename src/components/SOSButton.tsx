@@ -229,8 +229,8 @@ export const SOSButton: React.FC = () => {
               compete with the countdown ring) */}
           {phase === 'idle' && (
             <>
-              <span className="absolute inset-0 rounded-full bg-rose-600/30 animate-ping pointer-events-none" />
-              <span className="absolute inset-1 rounded-full bg-rose-600/20 animate-pulse pointer-events-none" />
+              <span className="absolute inset-0 rounded-full bg-danger/25 animate-ping pointer-events-none" />
+              <span className="absolute inset-1 rounded-full bg-danger/20 animate-pulse pointer-events-none" />
             </>
           )}
 
@@ -239,6 +239,7 @@ export const SOSButton: React.FC = () => {
             width={RING_SIZE}
             height={RING_SIZE}
             className="absolute inset-0 -rotate-90 pointer-events-none"
+            aria-hidden="true"
           >
             <circle
               cx={RING_SIZE / 2}
@@ -246,7 +247,7 @@ export const SOSButton: React.FC = () => {
               r={RING_RADIUS}
               fill="transparent"
               strokeWidth={RING_STROKE}
-              className="stroke-rose-900/60"
+              className="stroke-danger-light"
             />
             <circle
               cx={RING_SIZE / 2}
@@ -257,7 +258,8 @@ export const SOSButton: React.FC = () => {
               strokeLinecap="round"
               strokeDasharray={RING_C}
               strokeDashoffset={ringDashOffset}
-              className="stroke-white transition-[stroke-dashoffset] duration-100 ease-linear"
+              stroke="#FFFFFF"
+              className="transition-[stroke-dashoffset] duration-100 ease-linear"
             />
           </svg>
 
@@ -270,23 +272,23 @@ export const SOSButton: React.FC = () => {
             onPointerCancel={handlePressEnd}
             onContextMenu={(e) => e.preventDefault()}
             disabled={isBusy}
-            className={`absolute inset-2 rounded-full flex items-center justify-center text-white shadow-2xl shadow-rose-900/50 border-2 border-white/20 tactile-btn transition-transform ${
+            className={`absolute inset-2 rounded-full flex items-center justify-center text-white shadow-lifted tactile-btn transition-colors ${
               phase === 'pressing'
-                ? 'bg-rose-700 scale-95'
-                : 'bg-rose-600 hover:bg-rose-500'
+                ? 'bg-danger-dark scale-95'
+                : 'bg-danger hover:bg-danger-dark'
             } ${isBusy ? 'opacity-90 cursor-wait' : 'cursor-pointer'}`}
           >
             {isBusy ? (
-              <Loader2 size={28} className="animate-spin" />
+              <Loader2 size={32} className="animate-spin" />
             ) : (
-              <ShieldAlert size={30} strokeWidth={2.4} />
+              <ShieldAlert size={32} strokeWidth={2.4} />
             )}
           </button>
         </div>
 
         {/* Helper chip — appears under the button on idle */}
         {phase === 'idle' && (
-          <span className="mt-1.5 px-2 py-0.5 rounded-full bg-rose-600/90 text-white text-[10px] font-bold uppercase tracking-wider shadow-md">
+          <span className="mt-2 px-3 py-1 rounded-pill bg-danger text-white text-xs font-medium uppercase tracking-wider shadow-soft">
             SOS · {labels.helper}
           </span>
         )}
@@ -295,26 +297,26 @@ export const SOSButton: React.FC = () => {
       {/* === Confirmation / status overlay === */}
       {showOverlay && (
         <div
-          className="fixed inset-0 z-50 bg-navy-950/95 backdrop-blur flex flex-col items-center justify-center px-6 py-10 animate-fade-in"
+          className="fixed inset-0 z-50 bg-navy-50/55 backdrop-blur-md flex flex-col items-center justify-center px-6 py-10 animate-fade-in"
           role="dialog"
           aria-modal="true"
         >
           {/* Pulsing red rings */}
           <div className="relative w-40 h-40 flex items-center justify-center mb-8">
-            <span className="absolute inset-0 rounded-full bg-rose-600/30 animate-ping" />
-            <span className="absolute inset-6 rounded-full bg-rose-600/50 animate-pulse" />
-            <div className="relative w-24 h-24 rounded-full bg-rose-600 flex items-center justify-center border-4 border-navy-950 shadow-2xl shadow-rose-900/60 text-white">
+            <span className="absolute inset-0 rounded-full bg-danger/25 animate-ping" />
+            <span className="absolute inset-6 rounded-full bg-danger/35 animate-pulse" />
+            <div className="relative w-28 h-28 rounded-full bg-danger flex items-center justify-center shadow-lifted text-white">
               {phase === 'sending' ? (
-                <Loader2 size={40} className="animate-spin" />
+                <Loader2 size={44} className="animate-spin" />
               ) : phase === 'error' ? (
-                <AlertTriangle size={40} />
+                <AlertTriangle size={44} />
               ) : (
-                <ShieldAlert size={40} strokeWidth={2.4} />
+                <ShieldAlert size={44} strokeWidth={2.4} />
               )}
             </div>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white text-center max-w-md leading-tight">
+          <h2 className="text-2xl sm:text-3xl font-medium text-white text-center max-w-md leading-tight">
             {phase === 'sending'
               ? labels.sending
               : phase === 'error'
@@ -323,38 +325,38 @@ export const SOSButton: React.FC = () => {
           </h2>
 
           {phase === 'sent' && sent && !sent.hasCoords && (
-            <p className="mt-3 flex items-center gap-2 text-rose-200 text-sm font-semibold text-center max-w-md">
-              <MapPin size={14} className="shrink-0" />
+            <p className="mt-4 flex items-center gap-2 text-white/90 text-sm font-medium text-center max-w-md">
+              <MapPin size={16} className="shrink-0" />
               <span>{labels.noLocation}</span>
             </p>
           )}
 
           {phase === 'error' && errorMsg && (
-            <p className="mt-3 text-rose-200 text-sm font-medium text-center max-w-md">
+            <p className="mt-4 text-white/90 text-sm font-medium text-center max-w-md">
               {errorMsg}
             </p>
           )}
 
           {phase === 'sent' && sent && (
-            <div className="mt-6 w-full max-w-md bg-navy-900 border border-navy-800 rounded-card p-4 shadow-xl">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-navy-700 mb-2">
+            <div className="mt-6 w-full max-w-md bg-navy-900 border border-navy-800 rounded-card p-5 shadow-lifted">
+              <div className="text-xs font-medium uppercase tracking-wider text-navy-700 mb-2">
                 {labels.message}
               </div>
-              <p className="text-sm text-white leading-relaxed break-words">
+              <p className="text-sm text-navy-50 leading-relaxed break-words">
                 {sent.message}
               </p>
             </div>
           )}
 
-          <div className="mt-8 flex items-center gap-3">
+          <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
             {phase === 'error' && (
               <button
                 onClick={() => {
                   setPhase('idle');
                   setErrorMsg(null);
                 }}
-                className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 px-6 rounded-card border-2 border-rose-500 shadow-lg tactile-btn"
-                style={{ minHeight: 48 }}
+                className="inline-flex items-center gap-2 bg-danger hover:bg-danger-dark text-white font-medium py-3 px-6 rounded-card shadow-soft tactile-btn"
+                style={{ minHeight: 52 }}
               >
                 <span>{labels.retry}</span>
               </button>
@@ -367,10 +369,10 @@ export const SOSButton: React.FC = () => {
                 setPressProgress(0);
               }}
               disabled={phase === 'sending'}
-              className="inline-flex items-center gap-2 bg-navy-900 hover:bg-navy-850 text-white font-bold py-3 px-6 rounded-card border-2 border-navy-800 shadow-lg tactile-btn disabled:opacity-50"
-              style={{ minHeight: 48 }}
+              className="inline-flex items-center gap-2 bg-navy-900 hover:bg-navy-850 text-navy-50 font-medium py-3 px-6 rounded-card border border-navy-800 hover:border-accent shadow-soft tactile-btn disabled:opacity-50"
+              style={{ minHeight: 52 }}
             >
-              <X size={16} />
+              <X size={18} />
               <span>{labels.dismiss}</span>
             </button>
           </div>

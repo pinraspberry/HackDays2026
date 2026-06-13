@@ -207,13 +207,13 @@ export const Assistant: React.FC = () => {
   return (
     <div className="space-y-5 h-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-            <Sparkles size={20} className="text-accent" />
+          <h2 className="text-2xl sm:text-3xl font-medium text-navy-50 tracking-tight flex items-center gap-2">
+            <Sparkles size={24} className="text-accent" />
             <span>Pulse Assistant</span>
           </h2>
-          <p className="text-sm text-navy-700 mt-0.5">
+          <p className="text-base text-navy-700 mt-1.5">
             {language === 'hi'
               ? 'दवाइयों, स्वास्थ्य या किसी अपलोड किए गए दस्तावेज़ के बारे में पूछें'
               : 'Ask about your medicines, health, or any uploaded document'}
@@ -221,24 +221,28 @@ export const Assistant: React.FC = () => {
         </div>
 
         {/* Mode toggle */}
-        <div className="inline-flex p-1 bg-navy-900 border border-navy-800 rounded-card self-start sm:self-auto">
+        <div className="inline-flex p-1.5 bg-navy-900 border border-navy-800 rounded-card self-start sm:self-auto">
           <button
             onClick={() => setMode('general')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-md tactile-btn ${
-              mode === 'general' ? 'bg-accent text-white' : 'text-navy-100 hover:text-white'
+            aria-pressed={mode === 'general'}
+            className={`px-4 text-sm font-medium rounded-md tactile-btn ${
+              mode === 'general' ? 'bg-accent text-white shadow-soft' : 'text-navy-100 hover:text-accent-dark'
             }`}
+            style={{ minHeight: 44 }}
           >
-            <Heart size={12} className="inline mr-1" />
+            <Heart size={16} className="inline mr-1.5" />
             {language === 'hi' ? 'सामान्य' : 'General'}
           </button>
           <button
             onClick={() => setMode('document')}
             disabled={documents.length === 0}
-            className={`px-3 py-1.5 text-xs font-bold rounded-md tactile-btn disabled:opacity-40 disabled:cursor-not-allowed ${
-              mode === 'document' ? 'bg-accent text-white' : 'text-navy-100 hover:text-white'
+            aria-pressed={mode === 'document'}
+            className={`px-4 text-sm font-medium rounded-md tactile-btn disabled:opacity-40 disabled:cursor-not-allowed ${
+              mode === 'document' ? 'bg-accent text-white shadow-soft' : 'text-navy-100 hover:text-accent-dark'
             }`}
+            style={{ minHeight: 44 }}
           >
-            <FileIcon size={12} className="inline mr-1" />
+            <FileIcon size={16} className="inline mr-1.5" />
             {language === 'hi' ? 'दस्तावेज़' : 'Document'}
           </button>
         </div>
@@ -250,20 +254,20 @@ export const Assistant: React.FC = () => {
         <div className="xl:col-span-3">
           <div className="card-navy flex flex-col h-[70vh] xl:h-[78vh] overflow-hidden p-0">
             {/* Top selector / status */}
-            <div className="p-4 border-b border-navy-800 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="p-5 border-b border-navy-800 flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-accent-dark flex items-center justify-center text-white shrink-0">
-                  <Bot size={18} />
+                <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-white shrink-0 shadow-soft">
+                  <Bot size={22} />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-white">Pulse Assistant</span>
-                    <span className="inline-flex items-center gap-1 text-[10px] text-success font-bold">
-                      <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
+                    <span className="font-medium text-navy-50 text-base">Pulse Assistant</span>
+                    <span className="inline-flex items-center gap-1 text-xs text-success-dark font-medium">
+                      <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
                       Online
                     </span>
                   </div>
-                  <span className="text-[11px] text-navy-700">
+                  <span className="text-sm text-navy-700 mt-0.5 block">
                     {mode === 'document'
                       ? language === 'hi'
                         ? 'दस्तावेज़ के साथ चैट कर रहे हैं'
@@ -279,7 +283,9 @@ export const Assistant: React.FC = () => {
                 <select
                   value={selectedDocId || ''}
                   onChange={(e) => setSelectedDocId(e.target.value)}
-                  className="bg-navy-950 border border-navy-800 rounded-card py-2 px-3 text-sm text-white outline-none focus:border-accent cursor-pointer min-w-0 sm:min-w-[240px] w-full sm:w-auto"
+                  aria-label="Select document to chat with"
+                  className="bg-navy-950 border border-navy-800 rounded-card px-4 text-sm text-navy-50 outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 cursor-pointer min-w-0 sm:min-w-[240px] w-full sm:w-auto transition-all"
+                  style={{ minHeight: 48 }}
                 >
                   {documents.length === 0 ? (
                     <option value="">No documents uploaded</option>
@@ -306,32 +312,32 @@ export const Assistant: React.FC = () => {
                     }`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${
+                      className={`w-10 h-10 rounded-full border flex items-center justify-center shrink-0 ${
                         isBot
                           ? 'bg-accent/10 border-accent/30 text-accent'
-                          : 'bg-navy-850 border-navy-800 text-white'
+                          : 'bg-navy-850 border-navy-800 text-navy-50'
                       }`}
                     >
-                      {isBot ? <Bot size={14} /> : <UserIcon size={14} />}
+                      {isBot ? <Bot size={18} /> : <UserIcon size={18} />}
                     </div>
 
                     <div
                       className={`max-w-[80%] sm:max-w-[70%] ${
                         isBot ? '' : 'items-end text-right'
-                      } flex flex-col gap-1`}
+                      } flex flex-col gap-1.5`}
                     >
                       <div
-                        className={`rounded-card px-4 py-3 text-sm leading-relaxed shadow-md whitespace-pre-wrap ${
+                        className={`rounded-card px-4 py-3 text-base leading-relaxed whitespace-pre-wrap ${
                           isBot
-                            ? 'bg-navy-950 text-white border border-navy-800 rounded-bl-sm'
-                            : 'bg-accent text-white border border-accent-dark rounded-br-sm'
+                            ? 'bg-navy-950 text-navy-50 border border-navy-800 rounded-bl-sm'
+                            : 'bg-accent text-white rounded-br-sm shadow-soft'
                         }`}
                       >
                         {msg.text}
                       </div>
 
                       <div
-                        className={`flex items-center gap-2 text-[10px] text-navy-700 font-semibold ${
+                        className={`flex items-center gap-2 text-xs text-navy-700 font-medium ${
                           isBot ? '' : 'flex-row-reverse'
                         }`}
                       >
@@ -339,9 +345,10 @@ export const Assistant: React.FC = () => {
                         {isBot && idx > 0 && (
                           <button
                             onClick={() => handleSpeakAloud(msg.text)}
-                            className="inline-flex items-center gap-1 hover:text-navy-100 tactile-btn"
+                            className="inline-flex items-center gap-1 hover:text-accent tactile-btn"
+                            aria-label="Read message aloud"
                           >
-                            <Volume2 size={11} />
+                            <Volume2 size={14} />
                             <span>{language === 'hi' ? 'सुनें' : 'Speak'}</span>
                           </button>
                         )}
@@ -353,13 +360,13 @@ export const Assistant: React.FC = () => {
 
               {isTyping && (
                 <div className="flex items-end gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-accent/10 border border-accent/30 text-accent flex items-center justify-center animate-pulse shrink-0">
-                    <Bot size={14} />
+                  <div className="w-10 h-10 rounded-full bg-accent/10 border border-accent/30 text-accent flex items-center justify-center animate-pulse shrink-0">
+                    <Bot size={18} />
                   </div>
-                  <div className="bg-navy-950 text-navy-700 rounded-card px-4 py-3 border border-navy-800 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-navy-700 rounded-full animate-bounce" />
-                    <span className="w-1.5 h-1.5 bg-navy-700 rounded-full animate-bounce [animation-delay:0.15s]" />
-                    <span className="w-1.5 h-1.5 bg-navy-700 rounded-full animate-bounce [animation-delay:0.3s]" />
+                  <div className="bg-navy-950 text-navy-700 rounded-card px-4 py-3 border border-navy-800 flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-navy-700 rounded-full animate-bounce" />
+                    <span className="w-2 h-2 bg-navy-700 rounded-full animate-bounce [animation-delay:0.15s]" />
+                    <span className="w-2 h-2 bg-navy-700 rounded-full animate-bounce [animation-delay:0.3s]" />
                   </div>
                 </div>
               )}
@@ -369,8 +376,8 @@ export const Assistant: React.FC = () => {
 
             {/* Suggestion chips */}
             {messages.length <= 1 && (
-              <div className="px-4 pt-3">
-                <div className="text-[10px] uppercase font-bold text-navy-700 tracking-widest mb-2">
+              <div className="px-5 pt-4">
+                <div className="text-xs uppercase font-medium text-navy-700 tracking-wider mb-3">
                   {language === 'hi' ? 'सुझाए गए सवाल' : 'Suggested Questions'}
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -378,7 +385,8 @@ export const Assistant: React.FC = () => {
                     <button
                       key={idx}
                       onClick={() => handleSendMessage(chip)}
-                      className="bg-navy-950 border border-navy-800 hover:border-accent/40 hover:bg-accent/5 rounded-full px-3 py-1.5 text-xs text-navy-100 hover:text-white font-medium tactile-btn"
+                      className="bg-navy-950 border border-navy-800 hover:border-accent hover:bg-accent/5 rounded-pill px-4 py-2 text-sm text-navy-100 hover:text-accent-dark font-medium tactile-btn"
+                      style={{ minHeight: 40 }}
                     >
                       {chip}
                     </button>
@@ -393,19 +401,19 @@ export const Assistant: React.FC = () => {
                 e.preventDefault();
                 handleSendMessage(input);
               }}
-              className="p-4 border-t border-navy-800 mt-3 flex items-end gap-2"
+              className="p-5 border-t border-navy-800 mt-3 flex items-end gap-2"
             >
               <button
                 type="button"
                 onClick={handleVoiceInput}
-                className={`shrink-0 w-12 h-12 rounded-card border flex items-center justify-center text-white tactile-btn ${
+                className={`shrink-0 w-12 h-12 rounded-card border flex items-center justify-center tactile-btn ${
                   recording
-                    ? 'bg-rose-500 border-rose-500 animate-pulse'
-                    : 'bg-navy-850 border-navy-800 hover:bg-navy-800'
+                    ? 'bg-danger border-danger text-white animate-pulse'
+                    : 'bg-navy-850 border-navy-800 hover:bg-accent/10 hover:border-accent text-navy-50 hover:text-accent'
                 }`}
-                aria-label="Voice input"
+                aria-label={recording ? 'Stop recording' : 'Start voice input'}
               >
-                {recording ? <Square size={16} fill="white" /> : <Mic size={18} />}
+                {recording ? <Square size={18} fill="white" /> : <Mic size={20} />}
               </button>
 
               <textarea
@@ -425,15 +433,18 @@ export const Assistant: React.FC = () => {
                       : 'Ask about this report…'
                     : t.chatPlaceholder
                 }
-                className="flex-1 bg-navy-950 border border-navy-800 rounded-card py-3 px-4 text-sm text-white outline-none focus:border-accent resize-none max-h-32 thin-scroll"
+                className="flex-1 bg-navy-950 border border-navy-800 rounded-card py-3 px-4 text-base text-navy-50 outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 resize-none max-h-32 thin-scroll transition-all"
+                style={{ minHeight: 48 }}
+                aria-label="Message input"
               />
 
               <button
                 type="submit"
                 disabled={!input.trim() || isTyping}
-                className="shrink-0 w-12 h-12 rounded-card bg-accent hover:bg-accent-dark border border-accent text-white tactile-btn shadow-lg shadow-accent/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="shrink-0 w-12 h-12 rounded-card bg-accent hover:bg-accent-dark text-white tactile-btn shadow-soft disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                aria-label="Send message"
               >
-                <Send size={18} />
+                <Send size={20} />
               </button>
             </form>
           </div>
@@ -442,32 +453,32 @@ export const Assistant: React.FC = () => {
         {/* ======= SIDE SUMMARY (xl only) ======= */}
         <aside className="hidden xl:flex flex-col gap-4">
           <div className="card-navy">
-            <div className="flex items-center gap-2 mb-3">
-              <Heart size={16} className="text-rose-500 fill-rose-500" />
-              <h3 className="text-xs font-bold text-navy-100 uppercase tracking-widest">
+            <div className="flex items-center gap-2 mb-4">
+              <Heart size={18} className="text-danger fill-danger" />
+              <h3 className="text-xs font-medium text-navy-50 uppercase tracking-wider">
                 Health Summary
               </h3>
             </div>
 
             <div className="space-y-3">
-              <div className="bg-navy-950 border border-navy-800 rounded-card p-3">
-                <div className="text-2xl font-extrabold text-accent">{adherenceRate}%</div>
-                <div className="text-[10px] uppercase tracking-widest font-bold text-navy-700 mt-1">
+              <div className="bg-navy-950 border border-navy-800 rounded-card p-4">
+                <div className="text-2xl font-medium text-accent">{adherenceRate}%</div>
+                <div className="text-xs uppercase tracking-wider font-medium text-navy-700 mt-1.5">
                   {t.adherenceRate}
                 </div>
               </div>
-              <div className="bg-navy-950 border border-navy-800 rounded-card p-3">
-                <div className="text-2xl font-extrabold text-orange-500 flex items-center gap-1.5">
-                  <Flame size={20} fill="#F97316" stroke="none" />
+              <div className="bg-navy-950 border border-navy-800 rounded-card p-4">
+                <div className="text-2xl font-medium text-warning-dark flex items-center gap-1.5">
+                  <Flame size={22} fill="#F0A429" stroke="none" />
                   <span>{streak}</span>
                 </div>
-                <div className="text-[10px] uppercase tracking-widest font-bold text-navy-700 mt-1">
+                <div className="text-xs uppercase tracking-wider font-medium text-navy-700 mt-1.5">
                   {t.streakText}
                 </div>
               </div>
-              <div className="bg-navy-950 border border-navy-800 rounded-card p-3">
-                <div className="text-2xl font-extrabold text-white">{medications.length}</div>
-                <div className="text-[10px] uppercase tracking-widest font-bold text-navy-700 mt-1">
+              <div className="bg-navy-950 border border-navy-800 rounded-card p-4">
+                <div className="text-2xl font-medium text-navy-50">{medications.length}</div>
+                <div className="text-xs uppercase tracking-wider font-medium text-navy-700 mt-1.5">
                   Active Medicines
                 </div>
               </div>
@@ -476,7 +487,7 @@ export const Assistant: React.FC = () => {
 
           {documents.length > 0 && (
             <div className="card-navy">
-              <h3 className="text-xs font-bold text-navy-100 uppercase tracking-widest mb-3">
+              <h3 className="text-xs font-medium text-navy-50 uppercase tracking-wider mb-4">
                 Recent Documents
               </h3>
               <div className="space-y-2">
@@ -487,16 +498,17 @@ export const Assistant: React.FC = () => {
                       setMode('document');
                       setSelectedDocId(d.id);
                     }}
-                    className={`w-full flex items-center gap-2 p-2 rounded-card border text-left transition-all tactile-btn ${
+                    className={`w-full flex items-center gap-3 p-3 rounded-card border text-left transition-all tactile-btn ${
                       selectedDocId === d.id && mode === 'document'
-                        ? 'border-accent/40 bg-accent/5'
-                        : 'border-navy-800 bg-navy-950 hover:border-navy-750'
+                        ? 'border-accent bg-accent/5'
+                        : 'border-navy-800 bg-navy-950 hover:border-accent/40'
                     }`}
+                    style={{ minHeight: 48 }}
                   >
-                    <FileIcon size={14} className="text-accent shrink-0" />
+                    <FileIcon size={18} className="text-accent shrink-0" />
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-white truncate">{d.name}</div>
-                      <div className="text-[10px] text-navy-700 truncate">{d.doctor}</div>
+                      <div className="text-sm font-medium text-navy-50 truncate">{d.name}</div>
+                      <div className="text-xs text-navy-700 truncate mt-0.5">{d.doctor}</div>
                     </div>
                   </button>
                 ))}

@@ -235,12 +235,12 @@ export const NearbyCareCard: React.FC<NearbyCareCardProps> = ({ onOpen }) => {
           <MapPin size={20} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-base font-bold text-white truncate">{labels.title}</div>
-          <p className="text-[11px] text-navy-700 leading-snug truncate">
+          <div className="text-base font-medium text-navy-50 truncate">{labels.title}</div>
+          <p className="text-xs text-navy-700 leading-snug truncate">
             {labels.subtitle}
           </p>
         </div>
-        <span className="inline-flex items-center gap-1.5 text-accent font-bold text-[10px] uppercase tracking-wider shrink-0 group-hover:translate-x-0.5 transition-transform">
+        <span className="inline-flex items-center gap-1.5 text-accent font-medium text-xs uppercase tracking-wider shrink-0 group-hover:translate-x-0.5 transition-transform">
           <span className="hidden sm:inline">{labels.openFull}</span>
           <ArrowRight size={14} />
         </span>
@@ -249,31 +249,31 @@ export const NearbyCareCard: React.FC<NearbyCareCardProps> = ({ onOpen }) => {
       {/* ===== Preview body ===== */}
       {denied ? (
         <div className="bg-navy-950 border border-dashed border-navy-800 rounded-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-card bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+          <div className="w-12 h-12 rounded-card bg-danger-light border border-danger/30 flex items-center justify-center text-danger-dark shrink-0">
             <Crosshair size={18} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-bold text-white">{labels.denied}</div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-bold text-navy-100">
+            <div className="text-sm font-medium text-navy-50">{labels.denied}</div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-navy-100">
               <span className="inline-flex items-center gap-1">
-                <Hospital size={10} className="text-rose-500" />
+                <Hospital size={14} className="text-danger" />
                 <span>{labels.chips[0]}</span>
               </span>
               <span className="inline-flex items-center gap-1">
-                <Stethoscope size={10} className="text-amber-500" />
+                <Stethoscope size={14} className="text-warning-dark" />
                 <span>{labels.chips[1]}</span>
               </span>
               <span className="inline-flex items-center gap-1">
-                <Pill size={10} className="text-emerald-500" />
+                <Pill size={14} className="text-success-dark" />
                 <span>{labels.chips[2]}</span>
               </span>
             </div>
           </div>
         </div>
       ) : error ? (
-        <div className="bg-navy-950 border border-rose-500/30 rounded-card p-3 flex items-center gap-2">
-          <AlertTriangle size={14} className="text-rose-400 shrink-0" />
-          <span className="text-xs font-bold text-white">{labels.error}</span>
+        <div className="bg-danger-light border border-danger/30 rounded-card p-3 flex items-center gap-2">
+          <AlertTriangle size={16} className="text-danger-dark shrink-0" />
+          <span className="text-xs font-medium text-navy-50">{labels.error}</span>
         </div>
       ) : (
         <>
@@ -283,12 +283,12 @@ export const NearbyCareCard: React.FC<NearbyCareCardProps> = ({ onOpen }) => {
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-navy-900/80">
                 <div className="flex items-center gap-2 text-navy-700">
                   <Loader2 size={16} className="animate-spin text-accent" />
-                  <span className="text-xs font-semibold">{labels.loading}</span>
+                  <span className="text-xs font-medium">{labels.loading}</span>
                 </div>
               </div>
             )}
             <div ref={mapDivRef} className="absolute inset-0" />
-            <span className="absolute bottom-1 right-1.5 text-[9px] text-white/70 font-semibold pointer-events-none bg-black/40 px-1 rounded">
+            <span className="absolute bottom-1 right-1.5 text-xs text-white font-medium pointer-events-none bg-navy-50/70 px-1.5 py-0.5 rounded-md">
               © OpenStreetMap
             </span>
           </div>
@@ -310,10 +310,10 @@ export const NearbyCareCard: React.FC<NearbyCareCardProps> = ({ onOpen }) => {
                   >
                     {amenityIcon(p.amenity)}
                   </span>
-                  <span className="flex-1 min-w-0 text-xs font-bold text-white truncate">
+                  <span className="flex-1 min-w-0 text-xs font-medium text-navy-50 truncate">
                     {p.name}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-accent shrink-0">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-accent shrink-0">
                     <Navigation size={10} />
                     {formatDistance(p.distanceMeters)}
                   </span>
@@ -323,7 +323,7 @@ export const NearbyCareCard: React.FC<NearbyCareCardProps> = ({ onOpen }) => {
           )}
 
           {!loading && coords && top3.length === 0 && !error && (
-            <div className="mt-3 text-center text-[11px] font-bold text-navy-700 py-2">
+            <div className="mt-3 text-center text-xs font-medium text-navy-700 py-2">
               {labels.none}
             </div>
           )}
