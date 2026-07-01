@@ -1,12 +1,62 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
 import { useMedication } from '../context/MedicationContext';
 import { useSettings } from '../context/SettingsContext';
+import {
+  computeAge,
+  useActivePatient,
+  useRole,
+  type UserProfile,
+} from '../context/RoleContext';
+import { useFirebase } from '../context/FirebaseContext';
+import { db } from '../firebase';
 import { jsPDF } from 'jspdf';
 import { Flame, AlertCircle, FileText, CheckCircle2, XCircle } from 'lucide-react';
+
+const GENDER_LABEL: Record<NonNullable<UserProfile['gender']>, string> = {
+  male: 'Male',
+  female: 'Female',
+  other: 'Other',
+  prefer_not_to_say: 'Not disclosed',
+};
 
 export const AdherenceReport: React.FC = () => {
   const { medications, logs, streak, adherenceRate } = useMedication();
   const { language, t } = useSettings();
+  const { profile } = useRole();
+  const { user } = useFirebase();
+  const { patientId, isCaregiverViewing } = useActivePatient();
+
+  // When a caregiver is viewing a linked patient, the in-memory `profile`
+  // belongs to the caregiver — we still want the PDF to be about the
+  // patient, so fetch their doc on demand.
+  const [activeProfile, setActiveProfile] = useState<UserProfile | null>(
+    profile ?? null
+  );
+  useEffect(() => {
+    if (!patientId) {
+      setActiveProfile(profile ?? null);
+      return;
+    }
+    if (!isCaregiverViewing) {
+      setActiveProfile(profile ?? null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, `users/${patientId}`));
+        if (cancelled) return;
+        setActiveProfile(snap.exists() ? (snap.data() as UserProfile) : null);
+      } catch (err) {
+        console.warn('AdherenceReport: fetch patient profile failed', err);
+        if (!cancelled) setActiveProfile(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [patientId, isCaregiverViewing, profile]);
 
   // 1. Calculate 7-day logs details for the SVG bar chart
   const today = new Date();
@@ -67,75 +117,162 @@ export const AdherenceReport: React.FC = () => {
 
   // 3. Export PDF using jsPDF
   const exportPDFReport = () => {
-    const doc = new jsPDF({
+    const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
     });
 
+    // Resolve the patient identity for this report. When a caregiver is
+    // viewing a linked patient, `activeProfile` is that patient; otherwise
+    // it falls back to the signed-in user.
+    const patientName =
+      activeProfile?.fullName ||
+      activeProfile?.displayName ||
+      user?.email ||
+      'PULSE Patient';
+    const age = computeAge(activeProfile?.dateOfBirth);
+    const ageText = age != null ? `${age} yrs` : '—';
+    const genderText = activeProfile?.gender
+      ? GENDER_LABEL[activeProfile.gender]
+      : '—';
+    const blood = activeProfile?.bloodGroup || '—';
+    const heightWeight = [
+      activeProfile?.heightCm ? `${activeProfile.heightCm} cm` : null,
+      activeProfile?.weightKg ? `${activeProfile.weightKg} kg` : null,
+    ]
+      .filter(Boolean)
+      .join(' / ') || '—';
+
     // Elegant medical header
-    doc.setFillColor(11, 19, 43); // deep navy
-    doc.rect(0, 0, 210, 40, 'F');
+    pdf.setFillColor(11, 19, 43); // deep navy
+    pdf.rect(0, 0, 210, 40, 'F');
 
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(24);
-    doc.text("PULSE MEDICATION REPORT", 15, 18);
-    
-    doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()} | Patient: Self Profile`, 15, 28);
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont('Helvetica', 'bold');
+    pdf.setFontSize(24);
+    pdf.text('PULSE MEDICATION REPORT', 15, 18);
 
-    // Adherence summaries
-    doc.setFillColor(248, 250, 252);
-    doc.rect(15, 50, 180, 25, 'F');
-    doc.setDrawColor(226, 232, 240);
-    doc.rect(15, 50, 180, 25);
+    pdf.setFont('Helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.text(
+      `Generated on: ${new Date().toLocaleDateString()}  |  Patient: ${patientName}`,
+      15,
+      28
+    );
+    pdf.text(
+      `Age: ${ageText}  |  Gender: ${genderText}  |  Blood Group: ${blood}`,
+      15,
+      34
+    );
 
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(12);
-    doc.setFont('Helvetica', 'bold');
-    doc.text("ADHERENCE SUMMARY", 20, 58);
-    doc.setFont('Helvetica', 'normal');
-    doc.text(`7-Day Adherence Score: ${adherenceRate}%`, 20, 68);
-    doc.text(`Current Streak: ${streak} Days`, 120, 68);
+    // ----- Patient profile block -----
+    pdf.setFillColor(248, 250, 252);
+    pdf.rect(15, 46, 180, 38, 'F');
+    pdf.setDrawColor(226, 232, 240);
+    pdf.rect(15, 46, 180, 38);
 
-    // Active Medications lists
-    doc.setFontSize(14);
-    doc.setFont('Helvetica', 'bold');
-    doc.text("CURRENT PRESCRIBED MEDICATIONS", 15, 90);
-    
-    let y = 100;
-    doc.setFontSize(10);
-    
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFontSize(12);
+    pdf.setFont('Helvetica', 'bold');
+    pdf.text('PATIENT PROFILE', 20, 54);
+    pdf.setFontSize(10);
+    pdf.setFont('Helvetica', 'normal');
+
+    const conditionsText = (() => {
+      const list = activeProfile?.conditions ?? [];
+      const notes = (activeProfile?.conditionsNotes || '').trim();
+      const joined = list.length ? list.join(', ') : '';
+      if (joined && notes) return `${joined} (${notes})`;
+      if (joined) return joined;
+      if (notes) return notes;
+      return 'None reported';
+    })();
+    const allergiesText =
+      activeProfile?.allergies && activeProfile.allergies.length > 0
+        ? activeProfile.allergies.join(', ')
+        : 'None reported';
+    const ec = activeProfile?.emergencyContact;
+    const emergencyText = ec && (ec.name || ec.phone)
+      ? `${ec.name || '—'} (${ec.relationship || 'contact'}) — ${ec.phone || '—'}`
+      : 'Not provided';
+    const phoneText = activeProfile?.phoneNumber || 'Not provided';
+
+    // Word-wrap long fields so they fit inside the 170mm column.
+    const writeRow = (label: string, value: string, yPos: number): number => {
+      pdf.setFont('Helvetica', 'bold');
+      pdf.text(label, 20, yPos);
+      pdf.setFont('Helvetica', 'normal');
+      const wrapped = pdf.splitTextToSize(value, 130) as string[];
+      pdf.text(wrapped, 60, yPos);
+      return yPos + Math.max(5, wrapped.length * 5);
+    };
+
+    let py = 60;
+    py = writeRow('Height / Weight:', heightWeight, py);
+    py = writeRow('Phone:', phoneText, py);
+    py = writeRow('Conditions:', conditionsText, py);
+    py = writeRow('Allergies:', allergiesText, py);
+    py = writeRow('Emergency contact:', emergencyText, py);
+
+    // ----- Adherence summary -----
+    let y = Math.max(py + 4, 96);
+    pdf.setFillColor(248, 250, 252);
+    pdf.rect(15, y, 180, 22, 'F');
+    pdf.setDrawColor(226, 232, 240);
+    pdf.rect(15, y, 180, 22);
+
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFontSize(12);
+    pdf.setFont('Helvetica', 'bold');
+    pdf.text('ADHERENCE SUMMARY', 20, y + 8);
+    pdf.setFont('Helvetica', 'normal');
+    pdf.text(`7-Day Adherence Score: ${adherenceRate}%`, 20, y + 16);
+    pdf.text(`Current Streak: ${streak} Days`, 120, y + 16);
+    y += 32;
+
+    // ----- Active medications -----
+    pdf.setFontSize(14);
+    pdf.setFont('Helvetica', 'bold');
+    pdf.text('CURRENT PRESCRIBED MEDICATIONS', 15, y);
+    y += 10;
+    pdf.setFontSize(10);
+
     medications.forEach((med, idx) => {
-      doc.setFont('Helvetica', 'bold');
-      doc.text(`${idx + 1}. ${med.name} -- ${med.dosage}`, 15, y);
-      doc.setFont('Helvetica', 'normal');
-      doc.text(`Frequency: ${med.frequency} | Timing: [${med.timing.join(', ')}] | Directions: ${med.instructions}`, 20, y + 5);
+      pdf.setFont('Helvetica', 'bold');
+      pdf.text(`${idx + 1}. ${med.name} -- ${med.dosage}`, 15, y);
+      pdf.setFont('Helvetica', 'normal');
+      pdf.text(
+        `Frequency: ${med.frequency} | Timing: [${med.timing.join(', ')}] | Directions: ${med.instructions}`,
+        20,
+        y + 5
+      );
       y += 14;
     });
 
-    // Missed doses section
+    // ----- Missed doses -----
     if (missedDosesList.length > 0) {
-      y += 10;
-      doc.setFontSize(14);
-      doc.setFont('Helvetica', 'bold');
-      doc.text("MISSED DOSES RECORD (PAST 7 DAYS)", 15, y);
-      
-      y += 10;
-      doc.setFontSize(10);
-      doc.setFont('Helvetica', 'normal');
-      doc.setTextColor(225, 29, 72); // rose red
+      y += 6;
+      pdf.setFontSize(14);
+      pdf.setFont('Helvetica', 'bold');
+      pdf.setTextColor(15, 23, 42);
+      pdf.text('MISSED DOSES RECORD (PAST 7 DAYS)', 15, y);
+
+      y += 8;
+      pdf.setFontSize(10);
+      pdf.setFont('Helvetica', 'normal');
+      pdf.setTextColor(225, 29, 72); // rose red
 
       missedDosesList.slice(0, 10).forEach((miss) => {
-        doc.text(`• ${miss.name} - Missed during ${miss.slot} slot on ${miss.date}`, 15, y);
+        pdf.text(`• ${miss.name} - Missed during ${miss.slot} slot on ${miss.date}`, 15, y);
         y += 7;
       });
     }
 
-    // Save report
-    doc.save(`pulse_adherence_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    // Sanitise the filename so a patient with spaces in their name still
+    // produces a sensible download.
+    const slug = patientName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    pdf.save(`pulse_adherence_${slug || 'patient'}_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   return (

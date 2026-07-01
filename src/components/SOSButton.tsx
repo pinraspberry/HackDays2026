@@ -191,7 +191,10 @@ export const SOSButton: React.FC = () => {
       }
 
       const patientName =
-        profile?.displayName || user.email || 'PULSE Patient';
+        profile?.fullName ||
+        profile?.displayName ||
+        user.email ||
+        'PULSE Patient';
 
       setPhase('processing');
       try {

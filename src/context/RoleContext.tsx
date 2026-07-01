@@ -19,6 +19,23 @@ import { useFirebase } from './FirebaseContext';
 
 export type UserRole = 'patient' | 'caregiver';
 
+export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
+export type BloodGroup =
+  | 'A+'
+  | 'A-'
+  | 'B+'
+  | 'B-'
+  | 'AB+'
+  | 'AB-'
+  | 'O+'
+  | 'O-';
+
+export interface EmergencyContact {
+  name: string;
+  phone: string;
+  relationship: string;
+}
+
 export interface LinkedPatientRow {
   userId: string;
   name: string;
@@ -34,7 +51,60 @@ export interface UserProfile {
   linkedCaregiverIds?: string[];
   activePatientId?: string | null;
   displayName?: string;
+
+  // PULSE — modified
+  // Personal/medical details captured during the new onboarding step.
+  // All fields are optional so legacy docs (pre-this-change) keep
+  // working; new accounts always populate at least fullName + DOB.
+  fullName?: string;
+  dateOfBirth?: string; // ISO YYYY-MM-DD; age derived at read-time
+  gender?: Gender;
+
+  // Patient-only medical basics. Caregivers leave these undefined.
+  bloodGroup?: BloodGroup;
+  heightCm?: number;
+  weightKg?: number;
+  allergies?: string[];
+  conditions?: string[];
+  conditionsNotes?: string;
+
+  emergencyContact?: EmergencyContact;
+  detailsCompletedAt?: string;
 }
+
+/**
+ * Returns age in whole years for an ISO YYYY-MM-DD date string. Returns
+ * null when the input is missing or unparseable so callers can decide
+ * what to render in the empty state (e.g. an em-dash).
+ */
+export const computeAge = (dob?: string | null): number | null => {
+  if (!dob) return null;
+  const d = new Date(dob);
+  if (Number.isNaN(d.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - d.getFullYear();
+  const m = today.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age -= 1;
+  return age >= 0 && age < 150 ? age : null;
+};
+
+/**
+ * Preset condition chips shown in the personal-details form. Kept here
+ * (rather than inline in the form) so other consumers — e.g. the PDF
+ * report or future analytics — can reference the canonical labels.
+ */
+export const CONDITION_PRESETS: string[] = [
+  'Diabetes',
+  'Hypertension',
+  'Asthma',
+  'Heart',
+  'Thyroid',
+  'Cholesterol',
+  'Arthritis',
+  'Kidney',
+  'Cancer',
+  'Other',
+];
 
 interface RoleContextType {
   role: UserRole | null;
@@ -51,6 +121,7 @@ interface RoleContextType {
   saveRole: (role: UserRole) => Promise<void>;
   savePhoneNumber: (phoneNumber: string) => Promise<void>;
   saveDisplayName: (name: string) => Promise<void>;
+  savePersonalDetails: (patch: Partial<UserProfile>) => Promise<void>;
   refreshLinkedPatients: () => Promise<void>;
 }
 
@@ -165,7 +236,11 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const { adherencePercent, medicineCount } = await fetchAdherenceFor(pid);
           return {
             userId: pid,
-            name: p.displayName || (p.phoneNumber ? p.phoneNumber : 'Linked Patient'),
+            name:
+              p.fullName ||
+              p.displayName ||
+              p.phoneNumber ||
+              'Linked Patient',
             email: undefined,
             adherencePercent,
             medicineCount,
@@ -221,6 +296,30 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [user]
   );
 
+  // PULSE — modified
+  // Single write that merges any subset of personal/medical fields into
+  // the user doc. Used by the onboarding "Details" step on first run
+  // and by the My Profile edit page later. Stamps detailsCompletedAt
+  // whenever a write goes through so we can tell "filled at least once"
+  // apart from "still empty".
+  const savePersonalDetails = useCallback(
+    async (patch: Partial<UserProfile>) => {
+      if (!user) return;
+      const payload: Record<string, any> = {
+        ...patch,
+        detailsCompletedAt: new Date().toISOString(),
+      };
+      // Mirror fullName into the legacy `displayName` field so older
+      // call sites (SOS pipeline, caregiver link) that haven't migrated
+      // yet keep showing the new name immediately.
+      if (typeof patch.fullName === 'string' && patch.fullName.trim()) {
+        payload.displayName = patch.fullName.trim();
+      }
+      await setDoc(userDocRef(user.uid), payload, { merge: true });
+    },
+    [user]
+  );
+
   const role = (profile?.role as UserRole | undefined) ?? null;
   const phoneNumber = profile?.phoneNumber ?? null;
 
@@ -249,6 +348,7 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveRole,
     savePhoneNumber,
     saveDisplayName,
+    savePersonalDetails,
     refreshLinkedPatients,
   };
 

@@ -19,20 +19,29 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  IdCard,
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
+import PersonalDetailsForm from '../components/PersonalDetailsForm';
 
 interface OnboardingProps {
   onComplete: () => void;
 }
 
-type Step = 'role' | 'phone';
+type Step = 'role' | 'details' | 'phone';
 
 const RECAPTCHA_CONTAINER_ID = 'pulse-recaptcha-container';
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const { user } = useFirebase();
-  const { profile, role, saveRole, savePhoneNumber, saveDisplayName } = useRole();
+  const {
+    profile,
+    role,
+    saveRole,
+    savePhoneNumber,
+    saveDisplayName,
+    savePersonalDetails,
+  } = useRole();
   const { language } = useSettings();
 
   const [step, setStep] = useState<Step>('role');
@@ -52,19 +61,31 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
   const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
 
-  // If profile already has a role, skip step 1
+  // If profile already has a role, skip step 1 — and if the personal
+  // details are already filled (returning user with phone still pending),
+  // jump straight to phone verification.
   useEffect(() => {
-    if (role && step === 'role') {
-      setStep('phone');
-    }
-  }, [role]);
+    if (!role) return;
+    if (step !== 'role') return;
+    const detailsDone = !!profile?.fullName && !!profile?.dateOfBirth;
+    setStep(detailsDone ? 'phone' : 'details');
+  }, [role, profile?.fullName, profile?.dateOfBirth, step]);
 
-  // If both role and phoneNumber already set, complete
+  // If role + details + phone are all set, onboarding is done. Phone is
+  // explicitly skippable (handleSkipPhone writes an empty string), so we
+  // accept any non-undefined phoneNumber as "step 3 completed".
   useEffect(() => {
-    if (role && profile?.phoneNumber) {
+    const detailsDone = !!profile?.fullName && !!profile?.dateOfBirth;
+    if (role && detailsDone && profile?.phoneNumber !== undefined) {
       onComplete();
     }
-  }, [role, profile?.phoneNumber, onComplete]);
+  }, [
+    role,
+    profile?.fullName,
+    profile?.dateOfBirth,
+    profile?.phoneNumber,
+    onComplete,
+  ]);
 
   // Countdown ticking
   useEffect(() => {
@@ -90,13 +111,20 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         await saveDisplayName(displayName.trim());
       }
       await saveRole(chosen);
-      setStep('phone');
+      setStep('details');
     } catch (err: any) {
       console.error('saveRole failed', err);
       setError(err?.message || 'Could not save your role. Please try again.');
     } finally {
       setSavingRole(null);
     }
+  };
+
+  const handleSaveDetails = async (
+    patch: Parameters<typeof savePersonalDetails>[0]
+  ) => {
+    await savePersonalDetails(patch);
+    setStep('phone');
   };
 
   const fullPhone = `+91${phoneDigits}`;
@@ -239,24 +267,40 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         <div className="hidden sm:flex items-center gap-2 text-sm text-navy-700 font-medium">
           <span className={step === 'role' ? 'text-accent' : 'text-navy-700'}>1. Role</span>
           <span>›</span>
-          <span className={step === 'phone' ? 'text-accent' : 'text-navy-700'}>2. Phone</span>
+          <span className={step === 'details' ? 'text-accent' : 'text-navy-700'}>2. Details</span>
+          <span>›</span>
+          <span className={step === 'phone' ? 'text-accent' : 'text-navy-700'}>3. Phone</span>
         </div>
       </header>
 
       <div className="flex-1 flex items-center justify-center p-5 sm:p-10">
         <div className="w-full max-w-3xl">
           {/* Progress strip */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-2 rounded-full bg-navy-800 overflow-hidden" role="progressbar" aria-valuenow={step === 'role' ? 50 : 100} aria-valuemin={0} aria-valuemax={100}>
-              <div
-                className="h-full bg-accent transition-all duration-500"
-                style={{ width: step === 'role' ? '50%' : '100%' }}
-              />
-            </div>
-            <span className="text-xs font-medium text-navy-700 uppercase tracking-wider shrink-0">
-              {step === 'role' ? 'Step 1 of 2' : 'Step 2 of 2'}
-            </span>
-          </div>
+          {(() => {
+            const stepIndex = step === 'role' ? 1 : step === 'details' ? 2 : 3;
+            const pct = Math.round((stepIndex / 3) * 100);
+            return (
+              <div className="flex items-center gap-3 mb-6">
+                <div
+                  className="flex-1 h-2 rounded-full bg-navy-800 overflow-hidden"
+                  role="progressbar"
+                  aria-valuenow={pct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <div
+                    className="h-full bg-accent transition-all duration-500"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-xs font-medium text-navy-700 uppercase tracking-wider shrink-0">
+                  {language === 'hi'
+                    ? `चरण ${stepIndex} / 3`
+                    : `Step ${stepIndex} of 3`}
+                </span>
+              </div>
+            );
+          })()}
 
           {/* Status banners */}
           {error && (
@@ -395,8 +439,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             </div>
           )}
 
-          {/* ===== STEP 2 — PHONE ===== */}
-          {step === 'phone' && (
+          {/* ===== STEP 2 — PERSONAL DETAILS ===== */}
+          {step === 'details' && role && (
             <div className="space-y-6 animate-slide-up">
               <div>
                 <div className="flex items-center gap-3 mb-3">
@@ -404,6 +448,60 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     onClick={() => setStep('role')}
                     className="rounded-card bg-navy-900 border border-navy-800 hover:border-accent text-navy-50 hover:text-accent tactile-btn flex items-center justify-center min-tap"
                     aria-label="Go back to role selection"
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
+                  <div className="min-w-0">
+                    <h1 className="text-2xl sm:text-3xl font-medium text-navy-50 tracking-tight flex items-center gap-2">
+                      <IdCard size={24} className="text-accent shrink-0" />
+                      <span>
+                        {language === 'hi' ? 'अपना विवरण भरें' : 'Tell us about you'}
+                      </span>
+                    </h1>
+                    <p className="text-base text-navy-100 max-w-xl leading-relaxed mt-1.5">
+                      {role === 'patient'
+                        ? language === 'hi'
+                          ? 'यह जानकारी रिपोर्ट, दवा सलाह और आपात स्थिति में काम आती है। आप बाद में बदल सकते हैं।'
+                          : 'These details power your reports, dose suggestions, and emergency contacts. You can edit them later.'
+                        : language === 'hi'
+                        ? 'मरीज़ की रिपोर्ट और SOS में आपका नाम और संपर्क दिखाने के लिए ज़रूरी है।'
+                        : 'We use these so your linked patient (and any emergency responder) knows who you are.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <PersonalDetailsForm
+                role={role}
+                initial={{
+                  fullName: profile?.fullName || displayName || '',
+                  dateOfBirth: profile?.dateOfBirth,
+                  gender: profile?.gender,
+                  bloodGroup: profile?.bloodGroup,
+                  heightCm: profile?.heightCm,
+                  weightKg: profile?.weightKg,
+                  allergies: profile?.allergies,
+                  conditions: profile?.conditions,
+                  conditionsNotes: profile?.conditionsNotes,
+                  emergencyContact: profile?.emergencyContact,
+                }}
+                submitLabel={
+                  language === 'hi' ? 'सेव करें और जारी रखें' : 'Save & continue'
+                }
+                onSubmit={handleSaveDetails}
+              />
+            </div>
+          )}
+
+          {/* ===== STEP 3 — PHONE ===== */}
+          {step === 'phone' && (
+            <div className="space-y-6 animate-slide-up">
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <button
+                    onClick={() => setStep('details')}
+                    className="rounded-card bg-navy-900 border border-navy-800 hover:border-accent text-navy-50 hover:text-accent tactile-btn flex items-center justify-center min-tap"
+                    aria-label="Go back to personal details"
                   >
                     <ArrowLeft size={18} />
                   </button>

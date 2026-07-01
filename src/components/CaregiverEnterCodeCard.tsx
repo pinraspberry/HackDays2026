@@ -104,17 +104,21 @@ export const CaregiverEnterCodeCard: React.FC = () => {
         return;
       }
 
-      // Resolve the patient's display name (best-effort)
+      // Resolve the patient's display name (best-effort). Prefer the
+      // new `fullName` from the personal-details step; fall back to the
+      // legacy `displayName` for accounts created before this change.
       let patientName = 'Patient';
       try {
         const patientSnap = await getDoc(doc(db, `users/${patientId}`));
         if (patientSnap.exists()) {
           const p = patientSnap.data() as any;
-          patientName = p.displayName || p.phoneNumber || 'Patient';
+          patientName =
+            p.fullName || p.displayName || p.phoneNumber || 'Patient';
         }
       } catch {}
 
-      const caregiverName = profile?.displayName || user.email || 'Caregiver';
+      const caregiverName =
+        profile?.fullName || profile?.displayName || user.email || 'Caregiver';
 
       // 1) Update the link doc
       await updateDoc(doc(db, `caregiverLinks/${matchId}`), {

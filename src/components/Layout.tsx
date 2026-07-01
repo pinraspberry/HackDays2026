@@ -51,7 +51,7 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
   } = useSettings();
   const { addMedication } = useMedication();
   const { user } = useFirebase();
-  const { role, activePatientId, activePatientName, setActivePatientId } = useRole();
+  const { role, profile, activePatientId, activePatientName, setActivePatientId } = useRole();
   // PULSE — modified: caregiver navigation pings off the same context
   // the SOSAlertBanner reads from, so there's never a duplicate query.
   const { unacknowledgedCount } = useSOS();
@@ -239,7 +239,12 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
         ]
       : baseNavItems;
 
-  const userInitial = (user?.email || 'U').charAt(0).toUpperCase();
+  // Prefer the personalised name captured during onboarding for both
+  // the avatar initial and the dropdown header. We fall back through
+  // the legacy displayName and email so older accounts still get a
+  // sensible label until they edit their profile.
+  const profileName = profile?.fullName || profile?.displayName || '';
+  const userInitial = (profileName || user?.email || 'U').charAt(0).toUpperCase();
 
   // PULSE — modified: caregiver-only red ping rendered on the
   // dashboard nav item whenever there is an unacknowledged SOS event.
@@ -360,11 +365,32 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, childre
                     <div className="text-xs font-medium text-navy-700 uppercase tracking-wider">
                       Signed in as
                     </div>
-                    <div className="text-sm font-medium text-navy-50 truncate flex items-center gap-2 mt-1">
-                      <UserIcon size={16} className="text-navy-700" />
+                    {profileName && (
+                      <div className="text-sm font-medium text-navy-50 truncate flex items-center gap-2 mt-1">
+                        <UserIcon size={16} className="text-navy-700" />
+                        {profileName}
+                      </div>
+                    )}
+                    <div
+                      className={`text-xs text-navy-700 truncate ${
+                        profileName ? 'mt-0.5 pl-6' : 'flex items-center gap-2 mt-1'
+                      }`}
+                    >
+                      {!profileName && <UserIcon size={16} className="text-navy-700" />}
                       {user?.email || 'Guest'}
                     </div>
                   </div>
+                  <button
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      setActiveTab('profile');
+                    }}
+                    className="w-full flex items-center gap-3 px-3 text-sm font-medium text-navy-50 hover:bg-navy-850 rounded-card text-left tactile-btn"
+                    style={{ minHeight: 48 }}
+                  >
+                    <UserIcon size={18} className="text-accent" />
+                    <span>{language === 'hi' ? 'मेरी प्रोफ़ाइल' : 'My Profile'}</span>
+                  </button>
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-3 text-sm font-medium text-danger hover:bg-danger-light rounded-card text-left tactile-btn"
